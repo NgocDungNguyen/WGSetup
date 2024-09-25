@@ -1,0 +1,308 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Werewolf's Bloody Haunting - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=Eater&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        .creepy-text { font-family: 'Creepster', cursive; }
+        .nosifer-text { font-family: 'Nosifer', cursive; }
+        .eater-text { font-family: 'Eater', cursive; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="text-center mb-12">
+            <h1 class="nosifer-text text-4xl sm:text-5xl text-red-700 mb-4">Werewolf's Bloody Haunting</h1>
+            <p class="creepy-text text-xl sm:text-2xl text-red-500">Admin Control Panel</p>
+        </header>
+
+        <main>
+            <section id="role-assignment" class="mb-12">
+                <h2 class="eater-text text-2xl text-red-600 mb-6">Assign Roles to Players</h2>
+                <div id="role-containers"></div>
+            </section>
+
+            <section id="game-control" class="text-center mb-12">
+                <button id="start-game" class="bg-red-700 hover:bg-red-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300">
+                    <i class="fas fa-play-circle mr-2"></i>Start the Bloody Game
+                </button>
+            </section>
+
+            <section id="room-assignment" class="mt-12 hidden">
+                <h2 class="eater-text text-2xl text-red-600 mb-6">Room Assignments</h2>
+                <div id="room-containers" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            </section>
+
+            <section id="night-progression" class="mt-12 hidden">
+                <h2 class="eater-text text-2xl text-red-600 mb-6">Night Progression</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <button id="prev-night" class="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-lg transition-colors duration-300">
+                        <i class="fas fa-chevron-left mr-2"></i>Previous Night
+                    </button>
+                    <span id="current-night" class="text-xl font-bold">Night 1</span>
+                    <button id="next-night" class="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-lg transition-colors duration-300">
+                        Next Night<i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                </div>
+                <div id="status-containers"></div>
+                <button id="save-night" class="mt-4 bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full">
+                    <i class="fas fa-save mr-2"></i>Save Night Events
+                </button>
+            </section>
+
+            <section id="night-summary" class="mt-12 hidden">
+                <h2 class="eater-text text-2xl text-red-600 mb-6">Night Summary</h2>
+                <div id="summary-content" class="bg-gray-800 p-6 rounded-lg"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const roles = [
+            { name: 'Blood Hunter', count: 1, actions: ['Detect', 'Vengeance'] },
+            { name: 'Ravenous Werewolf', count: 4, actions: ['Attack'] },
+            { name: 'Terrified Villager', count: 8, actions: ['No Action'] },
+            { name: 'Cursed Seer', count: 1, actions: ['Vision'] },
+            { name: 'Doomed Protector', count: 1, actions: ['Protect', 'Sacrifice'] },
+            { name: 'Twisted Cupid', count: 1, actions: ['Link'] },
+            { name: 'Blood Witch', count: 1, actions: ['Revive', 'Eliminate'] },
+            { name: 'Spectral Whisperer', count: 1, actions: ['Influence'] },
+            { name: 'Shapeshifting Horror', count: 1, actions: ['Mimic', 'Reveal'] }
+        ];
+
+        const roleContainers = document.getElementById('role-containers');
+        const startGameButton = document.getElementById('start-game');
+        const roomAssignment = document.getElementById('room-assignment');
+        const roomContainers = document.getElementById('room-containers');
+        const nightProgression = document.getElementById('night-progression');
+        const statusContainers = document.getElementById('status-containers');
+        const prevNightButton = document.getElementById('prev-night');
+        const nextNightButton = document.getElementById('next-night');
+        const currentNightSpan = document.getElementById('current-night');
+        const saveNightButton = document.getElementById('save-night');
+        const nightSummary = document.getElementById('night-summary');
+        const summaryContent = document.getElementById('summary-content');
+
+        let players = [];
+        let currentNight = 1;
+        let nightEvents = {};
+
+        // Create role assignment inputs
+        roles.forEach(role => {
+            for (let i = 0; i < role.count; i++) {
+                const roleDiv = document.createElement('div');
+                roleDiv.className = 'mb-4 p-4 bg-gray-800 rounded-lg';
+                roleDiv.innerHTML = `
+                    <h3 class="creepy-text text-xl text-red-500 mb-2">${role.name} ${role.count > 1 ? '#' + (i + 1) : ''}</h3>
+                    <input type="text" placeholder="Player Name" class="player-name bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
+                    <select class="player-gender bg-gray-700 text-white px-3 py-2 rounded w-full">
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                `;
+                roleContainers.appendChild(roleDiv);
+            }
+        });
+
+        // Start game button click handler
+        startGameButton.addEventListener('click', function() {
+            players = [];
+            const playerInputs = document.querySelectorAll('.player-name');
+            const genderInputs = document.querySelectorAll('.player-gender');
+
+            playerInputs.forEach((input, index) => {
+                if (input.value && genderInputs[index].value) {
+                    const role = roles.find(role => players.filter(p => p.role.startsWith(role.name)).length < role.count);
+                    const roleCount = players.filter(p => p.role.startsWith(role.name)).length + 1;
+                    players.push({
+                        name: input.value,
+                        gender: genderInputs[index].value,
+                        role: `${role.name}${role.count > 1 ? ' #' + roleCount : ''}`,
+                        actions: role.actions,
+                        status: 'Alive'
+                    });
+                }
+            });
+
+            if (players.length !== playerInputs.length) {
+                alert('Please fill in all player names and genders before starting the game.');
+                return;
+            }
+
+            // Assign rooms
+            const rooms = assignRooms(players);
+
+            // Display room assignments
+            roomContainers.innerHTML = '';
+            rooms.forEach((room, index) => {
+                const roomDiv = document.createElement('div');
+                roomDiv.className = 'bg-gray-800 p-4 rounded-lg';
+                roomDiv.innerHTML = `
+                    <h3 class="creepy-text text-xl text-red-500 mb-2">Room ${index + 1}</h3>
+                    <ul class="list-disc list-inside">
+                        ${room.map(player => `<li>${player.name} (${player.gender})</li>`).join('')}
+                    </ul>
+                `;
+                roomContainers.appendChild(roomDiv);
+            });
+
+            updatePlayerStatus();
+
+            roomAssignment.classList.remove('hidden');
+            nightProgression.classList.remove('hidden');
+            nightSummary.classList.remove('hidden');
+        });
+
+        function updatePlayerStatus() {
+            statusContainers.innerHTML = '';
+            players.forEach(player => {
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'mb-4 p-4 bg-gray-800 rounded-lg';
+                statusDiv.innerHTML = `
+                    <h3 class="creepy-text text-xl text-red-500 mb-2">${player.name} (${player.role})</h3>
+                    <select class="player-status bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
+                        <option value="Alive" ${player.status === 'Alive' ? 'selected' : ''}>Alive</option>
+                        <option value="Dead" ${player.status === 'Dead' ? 'selected' : ''}>Dead</option>
+                    </select>
+                    <select class="player-action bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
+                        ${player.actions.map(action => `<option value="${action}">${action}</option>`).join('')}
+                    </select>
+                    <select class="player-target bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
+                        <option value="">Select Target</option>
+                        ${players.filter(p => p !== player).map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+                    </select>
+                    <input type="text" placeholder="Additional Notes" class="player-notes bg-gray-700 text-white px-3 py-2 rounded w-full">
+                `;
+                statusContainers.appendChild(statusDiv);
+            });
+        }
+
+        function assignRooms(players) {
+            const shuffledPlayers = players.sort(() => 0.5 - Math.random());
+            const rooms = Array.from({ length: 8 }, () => []);
+            let roomIndex = 0;
+
+            shuffledPlayers.forEach(player => {
+                rooms[roomIndex].push(player);
+                roomIndex = (roomIndex + 1) % 8;
+            });
+
+            // Ensure each room has at least one male
+            rooms.forEach((room, index) => {
+                if (!room.some(player => player.gender === 'male')) {
+                    const malePlayer = shuffledPlayers.find(p => p.gender === 'male' && !rooms.flat().includes(p));
+                    if (malePlayer) {
+                        room.push(malePlayer);
+                        const originalRoom = rooms.find(r => r.includes(malePlayer));
+                        originalRoom.splice(originalRoom.indexOf(malePlayer), 1);
+                    }
+                }
+            });
+
+            return rooms;
+        }
+
+        prevNightButton.addEventListener('click', function() {
+            if (currentNight > 1) {
+                currentNight--;
+                updateNightDisplay();
+            }
+        });
+
+        nextNightButton.addEventListener('click', function() {
+            currentNight++;
+            updateNightDisplay();
+        });
+
+        function updateNightDisplay() {
+            currentNightSpan.textContent = `Night ${currentNight}`;
+            if (nightEvents[currentNight]) {
+                updatePlayerStatus();
+                generateNightSummary();
+            } else {
+                updatePlayerStatus();
+                summaryContent.textContent = 'No events recorded for this night yet.';
+            }
+        }
+
+        saveNightButton.addEventListener('click', function() {
+            const nightData = [];
+            statusContainers.querySelectorAll('div').forEach(div => {
+                const playerName = div.querySelector('h3').textContent.split(' (')[0];
+                const status = div.querySelector('.player-status').value;
+                const action = div.querySelector('.player-action').value;
+                const target = div.querySelector('.player-target').value;
+                const notes = div.querySelector('.player-notes').value;
+
+                nightData.push({ playerName, status, action, target, notes });
+            });
+
+            nightEvents[currentNight] = nightData;
+            generateNightSummary();
+        });
+
+        function generateNightSummary() {
+            const events = nightEvents[currentNight];
+            if (!events) {
+                summaryContent.textContent = 'No events recorded for this night.';
+                return;
+            }
+
+            let summary = `As the moon rose on Night ${currentNight}, the village was shrouded in an eerie silence. `;
+
+            const attacks = events.filter(e => e.action === 'Attack' && e.target);
+            const protections = events.filter(e => e.action === 'Protect' && e.target);
+            const visions = events.filter(e => e.action === 'Vision' && e.target);
+
+            if (attacks.length > 0) {
+                summary += `The werewolves prowled the streets, their hunger insatiable. `;
+                attacks.forEach(attack => {
+                    const wasProtected = protections.some(p => p.target === attack.target);
+                    if (wasProtected) {
+                        summary += `They attempted to attack ${attack.target}, but their prey was mysteriously protected. `;
+                    } else {
+                        summary += `Their claws found ${attack.target}, leaving behind a gruesome scene. `;
+                    }
+                });
+            }
+
+            if (visions.length > 0) {
+                summary += `The Cursed Seer's eyes glowed in the darkness, piercing through veils of deception. `;
+                visions.forEach(vision => {
+                    summary += `They gazed upon ${vision.target}, uncovering hidden truths. `;
+                });
+            }
+
+            events.forEach(event => {
+                switch (event.action) {
+                    case 'Detect':
+                        summary += `The Blood Hunter's senses tingled as they investigated ${event.target}. `;
+                        break;
+                    case 'Revive':
+                        summary += `The Blood Witch worked their dark magic, attempting to breathe life back into ${event.target}. `;
+                        break;
+                    case 'Eliminate':
+                        summary += `A sinister curse was cast upon ${event.target}, their fate hanging by a thread. `;
+                        break;
+                    case 'Influence':
+                        summary += `Whispers of the beyond reached ${event.target}, subtly guiding their actions. `;
+                        break;
+                    case 'Mimic':
+                        summary += `The Shapeshifting Horror took on a new form, blending seamlessly among the villagers. `;
+                        break;
+                }
+            });
+
+            summary += `As dawn broke, the village awoke to face the consequences of the night's events, unaware of the horrors that had unfolded in the shadows.`;
+
+            summaryContent.innerHTML = summary;
+        }
+    });
+    </script>
+</body>
+</html>
