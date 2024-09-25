@@ -1,0 +1,518 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Werewolf's Bloody Haunting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=Eater&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .creepy-text { font-family: 'Creepster', cursive; }
+        .nosifer-text { font-family: 'Nosifer', cursive; }
+        .eater-text { font-family: 'Eater', cursive; }
+        .blood-overlay {
+            background: linear-gradient(to bottom, rgba(139,0,0,0.1), rgba(139,0,0,0.3));
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+        .role-card {
+            transition: all 0.6s ease;
+            transform-style: preserve-3d;
+            position: relative;
+            background: rgba(31, 41, 55, 0.8);
+        }
+        .role-card.flipped {
+            transform: rotateY(180deg);
+        }
+        .role-card-front, .role-card-back {
+            backface-visibility: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .role-card-back {
+            transform: rotateY(180deg);
+            background: url('https://placehold.co/300x200?text=Hidden+Role') center/cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Creepster', cursive;
+            font-size: 1.5rem;
+            color: #ff0000;
+            text-shadow: 2px 2px 4px #000;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .blood-drip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(to bottom, rgba(139,0,0,0), rgba(139,0,0,0.8));
+            animation: drip 2s infinite;
+        }
+        @keyframes drip {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(2); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center p-4 overflow-x-hidden">
+    <div class="blood-overlay"></div>
+    <div class="container mx-auto px-4 py-8 max-w-4xl relative z-10">
+        <header class="text-center mb-12">
+            <h1 class="nosifer-text text-4xl sm:text-5xl md:text-6xl text-red-700 mb-4 animate-pulse">Werewolf's Bloody Haunting</h1>
+            <p class="creepy-text text-xl sm:text-2xl text-red-500">Dare to Face Your Gruesome Fate</p>
+        </header>
+
+        <main class="relative">
+            <section id="password-section" class="text-center mb-8">
+                <h2 class="eater-text text-2xl sm:text-3xl text-red-600 mb-6">Enter the Cursed Password</h2>
+                <div class="bg-gray-800 p-4 rounded-lg border-2 border-red-800 shadow-2xl max-w-md mx-auto">
+                    <input type="password" id="filter-password" placeholder="Whisper the Bloody Code" class="bg-gray-700 text-red-400 px-4 py-2 rounded w-full mb-2 focus:outline-none focus:ring-2 focus:ring-red-700">
+                    <button id="unlock-button" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded w-full transition-colors duration-300">
+                        <i class="fas fa-skull-crossbones mr-2"></i>Unleash the Curse
+                    </button>
+                </div>
+            </section>
+
+            <section id="role-setup" class="hidden">
+                <h2 class="eater-text text-2xl sm:text-3xl text-red-600 mb-6 text-center">Select Roles for the Hunt</h2>
+                <div id="role-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Role cards will be dynamically inserted here -->
+                </div>
+                <button id="start-button" class="mt-8 bg-red-700 hover:bg-red-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full">
+                    <i class="fas fa-ghost mr-2"></i>Begin the Bloody Hunt
+                </button>
+            </section>
+
+            <section id="role-assignment" class="hidden text-center">
+                <h2 class="eater-text text-2xl sm:text-3xl text-red-600 mb-6">Reveal Your Gory Destiny</h2>
+                <button id="roll-button" class="bg-purple-800 hover:bg-purple-900 text-white px-6 py-3 rounded-lg text-xl transition-all duration-300 transform hover:scale-105 mb-8">
+                    <i class="fas fa-dice-d20 mr-2"></i>Roll the Bones of Doom
+                </button>
+                <div id="role-display" class="hidden mt-8 bg-gray-800 p-6 rounded-lg shadow-inner border-2 border-red-700 max-w-md mx-auto relative">
+                    <div class="blood-drip"></div>
+                    <h3 id="role-name" class="creepy-text text-3xl sm:text-4xl text-red-500 mb-4"></h3>
+                    <img id="role-image" class="w-full h-48 object-cover rounded-lg mb-4" src="" alt="">
+                    <div id="role-description" class="text-base sm:text-lg text-gray-300"></div>
+                    <button id="flip-button" class="mt-4 bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">
+                        <i class="fas fa-sync-alt mr-2"></i>Flip Card
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-8 text-red-400">
+            <p>&copy; 2024 Werewolf's Bloody Haunting | Beware the Crimson Moon</p>
+        </footer>
+    </div>
+
+
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const passwordSection = document.getElementById('password-section');
+    const roleSetup = document.getElementById('role-setup');
+    const roleGrid = document.getElementById('role-grid');
+    const startButton = document.getElementById('start-button');
+    const rollButton = document.getElementById('roll-button');
+    const roleDisplay = document.getElementById('role-display');
+    const roleName = document.getElementById('role-name');
+    const roleImage = document.getElementById('role-image');
+    const roleDescription = document.getElementById('role-description');
+    const unlockButton = document.getElementById('unlock-button');
+    const passwordInput = document.getElementById('filter-password');
+    const correctPassword = '1234';  // Password to unlock the filter
+  
+    let roles = [
+        {
+            name: 'Blood Hunter',
+            image: 'https://placehold.co/300x200?text=Blood+Hunter',
+            description: `
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Background:</h4>
+                    <p>A relentless pursuer of evil, sworn to eradicate the werewolf menace.</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Abilities:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Vengeance Strike: If killed, choose one player to eliminate before passing.</li>
+                        <li>Blood Sense: Once per game, detect if a player is a werewolf.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Strategy:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Build trust with villagers to gather information.</li>
+                        <li>Save your Blood Sense for a crucial moment.</li>
+                        <li>If killed, use Vengeance Strike wisely to take out a suspected werewolf.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-red-500 font-bold mb-2">Win Condition:</h4>
+                    <p>Eliminate all werewolves or die trying.</p>
+                </div>
+            `,
+            count: 1
+        },
+        {
+            name: 'Ravenous Werewolf',
+            image: 'https://placehold.co/300x200?text=Ravenous+Werewolf',
+            description: `
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Background:</h4>
+                    <p>A bloodthirsty beast, hiding among the villagers by day and hunting by night.</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Abilities:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Nightly Hunt: Choose one player to eliminate each night.</li>
+                        <li>Pack Mentality: Communicate secretly with other werewolves.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Strategy:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Blend in with villagers during the day.</li>
+                        <li>Coordinate attacks with fellow werewolves.</li>
+                        <li>Frame innocent villagers to create chaos.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-red-500 font-bold mb-2">Win Condition:</h4>
+                    <p>Outnumber the villagers.</p>
+                </div>
+            `,
+            count: 4
+        },
+        {
+            name: 'Terrified Villager',
+            image: 'https://placehold.co/300x200?text=Terrified+Villager',
+            description: `
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Background:</h4>
+                    <p>An ordinary person caught in a nightmare, struggling to survive and uncover the truth.</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Abilities:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Gut Feeling: Once per game, receive a hint about a player's true nature.</li>
+                        <li>Last Stand: If targeted for elimination, 10% chance to survive.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Strategy:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Pay close attention to other players' behaviors and voting patterns.</li>
+                        <li>Form alliances, but be wary of deception.</li>
+                        <li>Use your Gut Feeling at a critical moment to gain valuable information.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-red-500 font-bold mb-2">Win Condition:</h4>
+                    <p>Survive until all werewolves are eliminated.</p>
+                </div>
+            `,
+            count: 8
+        },
+        {
+            name: 'Cursed Seer',
+            image: 'https://placehold.co/300x200?text=Cursed+Seer',
+            description: `
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Background:</h4>
+                    <p>Blessed with the gift of insight, but cursed with the burden of knowledge.</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Abilities:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Nightly Vision: Each night, learn the true role of one player.</li>
+                        <li>Prophetic Dream: Once per game, receive a cryptic clue about the game's outcome.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Strategy:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Use your visions wisely to uncover werewolves.</li>
+                        <li>Share information cautiously to avoid becoming a target.</li>
+                        <li>Interpret your Prophetic Dream to guide the village.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-red-500 font-bold mb-2">Win Condition:</h4>
+                    <p>Survive and help villagers eliminate all werewolves.</p>
+                </div>
+            `,
+            count: 1
+        },
+        {
+            name: 'Doomed Protector',
+            image: 'https://placehold.co/300x200?text=Doomed+Protector',
+            description: `
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Background:</h4>
+                    <p>A selfless guardian, destined to sacrifice for the greater good.</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Abilities:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Nightly Guard: Choose one player to protect from elimination each night.</li>
+                        <li>Sacrificial Shield: Once per game, take the place of a player targeted for elimination.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Strategy:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Protect key players like the Seer or suspected innocents.</li>
+                        <li>Keep your identity secret to avoid werewolf attention.</li>
+                        <li>Use Sacrificial Shield at a crucial moment to save a vital ally.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-red-500 font-bold mb-2">Win Condition:</h4>
+                    <p>Ensure the village's survival, even at the cost of your life.</p>
+                </div>
+            `,
+            count: 1
+        },
+        {
+            name: 'Twisted Cupid',
+            image: 'https://placehold.co/300x200?text=Twisted+Cupid',
+            description: `
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Background:</h4>
+                    <p>A mischievous spirit, creating bonds of love in the midst of terror.</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Abilities:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Fateful Pairing: At the start of the game, choose two players to become Lovers.</li>
+                        <li>Whispers of the Heart: Once per game, learn if one of the Lovers is a werewolf.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Strategy:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Create unexpected pairings to add chaos to the game.</li>
+                        <li>Use your pairing to potentially reveal a werewolf's identity.</li>
+                        <li>Manipulate the Lovers' loyalty to benefit the village.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-red-500 font-bold mb-2">Win Condition:</h4>
+                    <p>Ensure at least one Lover survives until the end.</p>
+                </div>
+            `,
+            count: 1
+        },
+        {
+            name: 'Blood Witch',
+            image: 'https://placehold.co/300x200?text=Blood+Witch',
+            description: `
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Background:</h4>
+                    <p>A wielder of powerful magic, walking the fine line between salvation and damnation.</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Abilities:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Potion of Life: Once per game, revive a dead player.</li>
+                        <li>Curse of Death: Once per game, eliminate a player of your choice.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Strategy:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Save your potions for critical moments.</li>
+                        <li>Gather information before using your Curse of Death.</li>
+                        <li>Leverage your powers to gain trust and influence village decisions.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-red-500 font-bold mb-2">Win Condition:</h4>
+                    <p>Use your magic to ensure the village's victory against the werewolves.</p>
+                </div>
+            `,
+            count: 1
+        },
+        {
+            name: 'Spectral Whisperer',
+            image: 'https://placehold.co/300x200?text=Spectral+Whisperer',
+            description: `
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Background:</h4>
+                    <p>A ghostly entity, influencing the game from beyond the veil.</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Abilities:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Ethereal Message: Once per game, send an anonymous message to any player.</li>
+                        <li>Haunting Presence: Each night, slightly influence one player's actions.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Strategy:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Use your Ethereal Message to share crucial information or sow discord.</li>
+                        <li>Subtly manipulate players' decisions with your Haunting Presence.</li>
+                        <li>Observe carefully to determine the best use of your limited interventions.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-red-500 font-bold mb-2">Win Condition:</h4>
+                    <p>Guide the village to victory through your spectral influence.</p>
+                </div>
+            `,
+            count: 1
+        },
+        {
+            name: 'Shapeshifting Horror',
+            image: 'https://placehold.co/300x200?text=Shapeshifting+Horror',
+            description: `
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Background:</h4>
+                    <p>A mysterious creature, neither fully werewolf nor human.</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Abilities:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Mimicry: Each night, assume the role and abilities of another player.</li>
+                        <li>True Form: Once per game, reveal your current role to another player.</li>
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-red-500 font-bold mb-2">Strategy:</h4>
+                    <ul class="list-disc list-inside">
+                        <li>Adapt your strategy based on the role you mimic each night.</li>
+                        <li>Use your shifting nature to gather information from various perspectives.</li>
+                        <li>Decide carefully when to reveal your True Form for maximum impact.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-red-500 font-bold mb-2">Win Condition:</h4>
+                    <p>Survive until the end, regardless of which side wins.</p>
+                </div>
+            `,
+            count: 1
+        }
+    ];
+
+        function createFilterCard(role, index) {
+        return `
+            <div class="role-card p-4 rounded-lg border-2 border-red-700 shadow-lg relative overflow-hidden">
+                <h3 class="creepy-text text-lg text-red-500 mb-2">${role.name}</h3>
+                <p class="text-sm text-gray-300 mb-2">Count: ${role.count}</p>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" data-role-index="${index}" class="form-checkbox h-5 w-5 text-red-600">
+                    <span class="ml-2 text-sm text-gray-300">Filter Out</span>
+                </label>
+            </div>
+        `;
+    }
+
+    function createDetailedRoleCard(role) {
+        return `
+            <div class="role-card p-4 rounded-lg border-2 border-red-700 shadow-lg relative overflow-hidden">
+                <h3 class="creepy-text text-3xl sm:text-4xl text-red-500 mb-4">${role.name}</h3>
+                <img class="w-full h-48 object-cover rounded-lg mb-4" src="${role.image}" alt="${role.name}">
+                <div class="text-base sm:text-lg text-gray-300">${role.description}</div>
+            </div>
+        `;
+    }
+
+    function showElement(element) {
+        element.classList.remove('hidden');
+    }
+
+    function hideElement(element) {
+        element.classList.add('hidden');
+    }
+
+    unlockButton.addEventListener('click', function () {
+            const enteredPassword = passwordInput.value;
+            if (enteredPassword === correctPassword) {
+                hideElement(passwordSection);
+                showElement(roleSetup);
+                roleGrid.innerHTML = roles.map((role, index) => createFilterCard(role, index)).join('');
+            } else if (enteredPassword === '4321') {
+                // Redirect to admin page
+                window.location.href = 'admin.html';
+            } else {
+                alert('The spirits howl in rejection. Your blood is unworthy, mortal.');
+                passwordInput.classList.add('shake');
+                setTimeout(() => passwordInput.classList.remove('shake'), 500);
+            }
+        });
+
+    startButton.addEventListener('click', function () {
+        hideElement(roleSetup);
+        showElement(document.getElementById('role-assignment'));
+    });
+
+    rollButton.addEventListener('click', function () {
+        const availableRoles = roles.filter((role, index) => {
+            const checkbox = document.querySelector(`input[data-role-index="${index}"]`);
+            return role.count > 0 && !checkbox.checked;
+        });
+
+        if (availableRoles.length > 0) {
+            const randomIndex = Math.floor(Math.random() * availableRoles.length);
+            const selectedRole = availableRoles[randomIndex];
+
+            roleDisplay.innerHTML = createDetailedRoleCard(selectedRole);
+            showElement(roleDisplay);
+            
+            selectedRole.count--;
+
+            if (selectedRole.count === 0) {
+                const checkbox = document.querySelector(`input[data-role-index="${roles.indexOf(selectedRole)}"]`);
+                if (checkbox) checkbox.checked = true;
+            }
+        } else {
+            roleDisplay.innerHTML = `
+                <div class="role-card p-4 rounded-lg border-2 border-red-700 shadow-lg relative overflow-hidden">
+                    <h3 class="creepy-text text-3xl sm:text-4xl text-red-500 mb-4">The Abyss Hungers</h3>
+                    <img class="w-full h-48 object-cover rounded-lg mb-4" src="https://placehold.co/300x200?text=The+Abyss" alt="The Abyss">
+                    <div class="text-base sm:text-lg text-gray-300"><p>All roles have been consumed by the ravenous darkness.</p></div>
+                </div>
+            `;
+        }
+        showElement(roleDisplay);
+    });
+});
+</script>
+</body>
+</html>
