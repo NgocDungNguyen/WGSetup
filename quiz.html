@@ -36,205 +36,303 @@
             <div id="quiz-content" class="mt-8 hidden">
                 <!-- Quiz content will be dynamically inserted here -->
             </div>
+            <button id="back-button" class="mt-4 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors duration-300 hidden">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Quizzes
+            </button>
         </main>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const quizGrid = document.getElementById('quiz-grid');
-        const quizContent = document.getElementById('quiz-content');
-        const quizzes = [
-            { 
-                id: 1, 
-                title: "The Cryptic Riddle", 
-                description: "Solve the ancient riddle to reveal a hidden truth.",
-                content: `
-                    <p class="mb-4">Decipher the following riddle:</p>
-                    <p class="text-xl mb-4">"I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?"</p>
-                    <input type="text" id="riddle-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-4" placeholder="Enter your answer">
-                    <button onclick="checkRiddleAnswer()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Submit Answer</button>
-                `,
-                answer: "echo",
-                hint: "The Blood Hunter has keen senses."
-            },
-            { 
-                id: 2, 
-                title: "The Bloody Puzzle", 
-                description: "Piece together the gory clues to unmask a potential werewolf.",
-                content: `
-                    <p class="mb-4">Arrange the following clues in the correct order to reveal a werewolf's identity:</p>
-                    <div id="clue-container" class="mb-4">
-                        <div class="clue bg-gray-700 p-2 mb-2 cursor-move" draggable="true">Howling at midnight</div>
-                        <div class="clue bg-gray-700 p-2 mb-2 cursor-move" draggable="true">Silver allergy</div>
-                        <div class="clue bg-gray-700 p-2 mb-2 cursor-move" draggable="true">Excessive body hair</div>
-                        <div class="clue bg-gray-700 p-2 mb-2 cursor-move" draggable="true">Craving for raw meat</div>
-                    </div>
-                    <button onclick="checkPuzzleOrder()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Submit Order</button>
-                `,
-                answer: ["Silver allergy", "Excessive body hair", "Craving for raw meat", "Howling at midnight"],
-                hint: "The Ravenous Werewolf is among the villagers."
-            },
-            { 
-                id: 3, 
-                title: "The Whispering Shadows", 
-                description: "Listen carefully to the spectral voices for hints about player roles.",
-                content: `
-                    <p class="mb-4">Click the play button to hear spectral whispers. Write down what you hear:</p>
-                    <button onclick="playWhispers()" class="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded transition-colors duration-300 mb-4">
-                        <i class="fas fa-play mr-2"></i>Play Whispers
-                    </button>
-                    <textarea id="whisper-text" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-4" rows="4" placeholder="Write what you hear..."></textarea>
-                    <button onclick="checkWhispers()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Submit Whispers</button>
-                `,
-                answer: "The protector guards at night",
-                hint: "The Doomed Protector is vigilant."
-            },
-            { 
-                id: 4, 
-                title: "The Moonlit Challenge", 
-                description: "Complete a series of tasks under the watchful eye of the full moon.",
-                content: `
-                    <p class="mb-4">Work together to complete these tasks before the timer runs out:</p>
-                    <ol class="list-decimal list-inside mb-4">
-                        <li>Unscramble the word: FEWLOWER</li>
-                        <li>Solve the math problem: (13 x 4) + (7 x 6)</li>
-                        <li>Name three nocturnal animals</li>
-                    </ol>
-                    <div id="timer" class="text-2xl mb-4">2:00</div>
-                    <input type="text" id="task1-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Task 1 Answer">
-                    <input type="text" id="task2-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Task 2 Answer">
-                    <input type="text" id="task3-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-4" placeholder="Task 3 Answer">
-                    <button onclick="checkMoonlitChallenge()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Submit Answers</button>
-                `,
-                answer: ["werewolf", "94", ["owl", "bat", "wolf", "fox", "raccoon", "opossum", "moth"]],
-                hint: "The Cursed Seer's visions are strongest at night."
-            }
-        ];
-
-        function createQuizCard(quiz) {
-            return `
-                <div class="bg-gray-800 p-6 rounded-lg shadow-lg border-2 border-red-700">
-                    <h2 class="eater-text text-2xl text-red-500 mb-4">${quiz.title}</h2>
-                    <p class="text-gray-300 mb-4">${quiz.description}</p>
-                    <button onclick="startQuiz(${quiz.id})" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">
-                        Start Quiz
-                    </button>
+    const quizGrid = document.getElementById('quiz-grid');
+    const quizContent = document.getElementById('quiz-content');
+    const backButton = document.getElementById('back-button');
+    const quizzes = [
+        { 
+            id: 1, 
+            title: "Werewolf Trivia", 
+            description: "Test your knowledge about werewolves!",
+            content: `
+                <p class="mb-4">Answer these werewolf-related questions:</p>
+                <div class="mb-4">
+                    <p>1. What metal is said to harm werewolves?</p>
+                    <input type="text" id="trivia-answer-1" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Enter your answer">
                 </div>
-            `;
-        }
+                <div class="mb-4">
+                    <p>2. What celestial body is associated with werewolf transformations?</p>
+                    <input type="text" id="trivia-answer-2" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Enter your answer">
+                </div>
+                <div class="mb-4">
+                    <p>3. In what month is the "Hunter's Moon"?</p>
+                    <input type="text" id="trivia-answer-3" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Enter your answer">
+                </div>
+                <button onclick="checkTriviaAnswers()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Submit Answers</button>
+                <button onclick="resetTrivia()" class="ml-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors duration-300">Reset</button>
+            `,
+            answers: ["silver", "full moon", "october"],
+            hint: "The Blood Hunter knows werewolf lore well."
+        },
+        { 
+            id: 2, 
+            title: "Werewolf Weakness Potion", 
+            description: "Brew a potion to weaken the werewolves.",
+            content: `
+                <p class="mb-4">Select the correct ingredients to brew a potion that weakens werewolves. Choose 5 ingredients:</p>
+                <div id="ingredients" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+                    <button class="ingredient bg-gray-700 p-2 text-center" onclick="toggleIngredient(this)">Wolfsbane</button>
+                    <button class="ingredient bg-gray-700 p-2 text-center" onclick="toggleIngredient(this)">Silver Shavings</button>
+                    <button class="ingredient bg-gray-700 p-2 text-center" onclick="toggleIngredient(this)">Garlic</button>
+                    <button class="ingredient bg-gray-700 p-2 text-center" onclick="toggleIngredient(this)">Mistletoe Berries</button>
+                    <button class="ingredient bg-gray-700 p-2 text-center" onclick="toggleIngredient(this)">Moonstone Dust</button>
+                    <button class="ingredient bg-gray-700 p-2 text-center" onclick="toggleIngredient(this)">Vervain</button>
+                    <button class="ingredient bg-gray-700 p-2 text-center" onclick="toggleIngredient(this)">Holy Water</button>
+                    <button class="ingredient bg-gray-700 p-2 text-center" onclick="toggleIngredient(this)">Sage</button>
+                    <button class="ingredient bg-gray-700 p-2 text-center" onclick="toggleIngredient(this)">Belladonna</button>
+                    <button class="ingredient bg-gray-700 p-2 text-center" onclick="toggleIngredient(this)">Rowan Berries</button>
+                </div>
+                <p class="mb-4">Selected ingredients: <span id="selected-count">0</span>/5</p>
+                <button onclick="brewPotion()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Brew Potion</button>
+                <button onclick="resetPotion()" class="ml-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors duration-300">Reset</button>
+            `,
+            answer: ["Wolfsbane", "Silver Shavings", "Moonstone Dust", "Holy Water", "Rowan Berries"],
+            hint: "The Blood Witch knows the secrets of werewolf-weakening potions."
+        },
+        { 
+            id: 3, 
+            title: "Werewolf Pack Cipher", 
+            description: "Decode the secret message from the werewolf pack.",
+            content: `
+                <p class="mb-4">Decode the message using the cipher key:</p>
+                <p class="mb-2">A=1, B=2, C=3, ... Z=26</p>
+                <p class="text-lg mb-4">8-21-14-20 20-8-5 13-15-15-14-12-9-20 3-8-9-12-4</p>
+                <input type="text" id="cipher-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-4" placeholder="Enter the decoded message">
+                <button onclick="checkCipher()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Decode Message</button>
+                <button onclick="resetCipher()" class="ml-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors duration-300">Reset</button>
+            `,
+            answer: "hunt the moonlit child",
+            hint: "The Ravenous Werewolf communicates in code."
+        },
+        { 
+            id: 4, 
+            title: "Prophecy Riddle", 
+            description: "Solve the riddle to reveal a prophecy about the werewolves.",
+            content: `
+                <p class="mb-4">Part 1: Unscramble these words to reveal the first part of the prophecy:</p>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <input type="text" class="bg-gray-700 text-white px-3 py-2 rounded" value="GFAN" readonly>
+                    <input type="text" class="prophecy-word bg-gray-700 text-white px-3 py-2 rounded" placeholder="Unscrambled word">
+                    <input type="text" class="bg-gray-700 text-white px-3 py-2 rounded" value="RAHE" readonly>
+                    <input type="text" class="prophecy-word bg-gray-700 text-white px-3 py-2 rounded" placeholder="Unscrambled word">
+                    <input type="text" class="bg-gray-700 text-white px-3 py-2 rounded" value="UFYR" readonly>
+                    <input type="text" class="prophecy-word bg-gray-700 text-white px-3 py-2 rounded" placeholder="Unscrambled word">
+                    <input type="text" class="bg-gray-700 text-white px-3 py-2 rounded" value="ERIS" readonly>
+                    <input type="text" class="prophecy-word bg-gray-700 text-white px-3 py-2 rounded" placeholder="Unscrambled word">
+                </div>
+                <p class="mb-4">Part 2: Solve the riddle to complete the prophecy:</p>
+                <p class="text-lg mb-4">"In shadows deep, where moonlight creeps,<br>
+                A beast awaits, its hunger peaks.<br>
+                With silver light and _______ might,<br>
+                The curse will break in dawn's first sight."</p>
+                <input type="text" id="prophecy-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-4" placeholder="Enter the missing word">
+                <button onclick="checkProphecy()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Reveal Prophecy</button>
+                <button onclick="resetProphecy()" class="ml-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors duration-300">Reset</button>
+            `,
+            answers: {
+                part1: ["FANG", "HEAR", "FURY", "RISE"],
+                part2: "hunter"
+            },
+            hint: "The Spectral Whisperer hears whispers of the future."
+        },
+      {
+    id: 5,
+    title: "The Ultimate Enigma",
+    description: "Solve the final puzzle to determine the fate of the village.",
+    content: `
+        <p class="mb-4 text-lg">Unravel the mysteries hidden within these interconnected puzzles. Solve all parts to reveal the ultimate truth.</p>
+        
+        <div class="mb-6">
+            <h3 class="text-xl text-red-500 mb-2">Part 1: Cryptic Symbols</h3>
+            <p class="mb-2">Decode the following symbols to reveal a word:</p>
+            <p class="text-lg mb-2">🌙 🐺 👁️ 🌟 = ?</p>
+            <input type="text" id="symbols-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Enter the decoded word">
+        </div>
 
-        quizzes.forEach(quiz => {
-            quizGrid.innerHTML += createQuizCard(quiz);
-        });
+        <div class="mb-6">
+            <h3 class="text-xl text-red-500 mb-2">Part 2: Numeric Riddle</h3>
+            <p class="mb-2">Solve this riddle to get a number:</p>
+            <p class="mb-2">I am the number of lives a cat is said to have, multiplied by the phases of the moon, divided by the number of primary colors.</p>
+            <input type="number" id="numeric-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Enter the number">
+        </div>
 
-        window.startQuiz = function(quizId) {
-            const quiz = quizzes.find(q => q.id === quizId);
-            quizGrid.classList.add('hidden');
-            quizContent.classList.remove('hidden');
-            quizContent.innerHTML = quiz.content;
+        <div class="mb-6">
+            <h3 class="text-xl text-red-500 mb-2">Part 3: Word Transformation</h3>
+            <p class="mb-2">Transform 'WOLF' into 'HUMAN' by changing one letter at a time. Each change must result in a valid English word. Enter the middle word of your transformation:</p>
+            <input type="text" id="transform-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Enter the middle word">
+        </div>
 
-            if (quizId === 4) {
-                startMoonlitChallengeTimer();
-            }
-        }
+        <div class="mb-6">
+            <h3 class="text-xl text-red-500 mb-2">Part 4: Final Incantation</h3>
+            <p class="mb-2">Using the answers from the previous parts, create the final incantation:</p>
+            <p class="mb-2">- First letter of Part 1's answer</p>
+            <p class="mb-2">- The number from Part 2 in Roman numerals</p>
+            <p class="mb-2">- Last two letters of Part 3's answer</p>
+            <input type="text" id="incantation-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Enter the final incantation">
+        </div>
 
-        window.checkRiddleAnswer = function() {
-            const answer = document.getElementById('riddle-answer').value.toLowerCase();
-            if (answer === quizzes[0].answer) {
-                revealHint(quizzes[0].hint);
-            } else {
-                alert("Incorrect. Try again!");
-            }
-        }
+        <button onclick="checkUltimateEnigma()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Submit Answers</button>
+        <button onclick="resetUltimateEnigma()" class="ml-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors duration-300">Reset</button>
+    `,
+    answers: {
+        part1: "LUNA",
+        part2: 9,
+        part3: "WOLD",
+        part4: "LIXld"
+    },
+    hint: "The keywords 'AI', 'Y', 'Ci' hold the power to change everything. Speak them wisely."
+}
+    ];
 
-        window.checkPuzzleOrder = function() {
-            const clues = Array.from(document.querySelectorAll('.clue')).map(clue => clue.textContent);
-            if (JSON.stringify(clues) === JSON.stringify(quizzes[1].answer)) {
-                revealHint(quizzes[1].hint);
-            } else {
-                alert("Incorrect order. Try again!");
-            }
-        }
+    function createQuizCard(quiz) {
+        return `
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg border-2 border-red-700">
+                <h2 class="eater-text text-2xl text-red-500 mb-4">${quiz.title}</h2>
+                <p class="text-gray-300 mb-4">${quiz.description}</p>
+                <button onclick="startQuiz(${quiz.id})" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">
+                    Start Quiz
+                </button>
+            </div>
+        `;
+    }
 
-        window.playWhispers = function() {
-            // In a real implementation, this would play an audio file
-            alert("Playing whispers: 'The protector guards at night'");
-        }
-
-        window.checkWhispers = function() {
-            const whisperText = document.getElementById('whisper-text').value.toLowerCase();
-            if (whisperText.includes(quizzes[2].answer.toLowerCase())) {
-                revealHint(quizzes[2].hint);
-            } else {
-                alert("Incorrect. Listen carefully and try again!");
-            }
-        }
-
-        let moonlitChallengeTimer;
-        function startMoonlitChallengeTimer() {
-            let timeLeft = 120; // 2 minutes
-            const timerElement = document.getElementById('timer');
-            moonlitChallengeTimer = setInterval(() => {
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
-                timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                if (timeLeft <= 0) {
-                    clearInterval(moonlitChallengeTimer);
-                    alert("Time's up! The challenge is over.");
-                }
-                timeLeft--;
-            }, 1000);
-        }
-
-        window.checkMoonlitChallenge = function() {
-            clearInterval(moonlitChallengeTimer);
-            const answer1 = document.getElementById('task1-answer').value.toLowerCase();
-            const answer2 = document.getElementById('task2-answer').value;
-            const answer3 = document.getElementById('task3-answer').value.toLowerCase().split(',').map(animal => animal.trim());
-
-            if (answer1 === quizzes[3].answer[0] && 
-                answer2 === quizzes[3].answer[1].toString() && 
-                answer3.length >= 3 && answer3.every(animal => quizzes[3].answer[2].includes(animal))) {
-                revealHint(quizzes[3].hint);
-            } else {
-                alert("Not all answers are correct. Try again!");
-            }
-        }
-
-        function revealHint(hint) {
-            alert(`Congratulations! You've uncovered a hint: ${hint}`);
-            quizContent.classList.add('hidden');
-            quizGrid.classList.remove('hidden');
-        }
-
-        // Make clues draggable for the Bloody Puzzle
-        quizContent.addEventListener('dragstart', function(e) {
-            if (e.target.classList.contains('clue')) {
-                e.dataTransfer.setData('text/plain', e.target.textContent);
-                e.target.style.opacity = '0.5';
-            }
-        });
-
-        quizContent.addEventListener('dragend', function(e) {
-            if (e.target.classList.contains('clue')) {
-                e.target.style.opacity = '1';
-            }
-        });
-
-        quizContent.addEventListener('dragover', function(e) {
-            e.preventDefault();
-        });
-
-        quizContent.addEventListener('drop', function(e) {
-            e.preventDefault();
-            if (e.target.classList.contains('clue')) {
-                const draggedText = e.dataTransfer.getData('text/plain');
-                const tempText = e.target.textContent;
-                e.target.textContent = draggedText;
-                document.querySelector('.clue[draggable="true"]:not(:contains("' + draggedText + '"))').textContent = tempText;
-            }
-        });
+    quizzes.forEach(quiz => {
+        quizGrid.innerHTML += createQuizCard(quiz);
     });
+
+    window.startQuiz = function(quizId) {
+        const quiz = quizzes.find(q => q.id === quizId);
+        quizGrid.classList.add('hidden');
+        quizContent.classList.remove('hidden');
+        backButton.classList.remove('hidden');
+        quizContent.innerHTML = quiz.content;
+    }
+
+    backButton.addEventListener('click', function() {
+        quizContent.classList.add('hidden');
+        quizGrid.classList.remove('hidden');
+        backButton.classList.add('hidden');
+    });
+
+    window.checkTriviaAnswers = function() {
+        const answers = [
+            document.getElementById('trivia-answer-1').value.toLowerCase(),
+            document.getElementById('trivia-answer-2').value.toLowerCase(),
+            document.getElementById('trivia-answer-3').value.toLowerCase()
+        ];
+        if (JSON.stringify(answers) === JSON.stringify(quizzes[0].answers)) {
+            revealHint(quizzes[0].hint);
+        } else {
+            alert("Not all answers are correct. Try again!");
+        }
+    }
+
+    window.resetTrivia = function() {
+        document.getElementById('trivia-answer-1').value = '';
+        document.getElementById('trivia-answer-2').value = '';
+        document.getElementById('trivia-answer-3').value = '';
+    }
+
+    window.toggleIngredient = function(button) {
+        button.classList.toggle('bg-red-600');
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('.ingredient.bg-red-600').length;
+        document.getElementById('selected-count').textContent = selectedCount;
+    }
+
+    window.brewPotion = function() {
+        const selectedIngredients = Array.from(document.querySelectorAll('.ingredient.bg-red-600')).map(btn => btn.textContent);
+        if (selectedIngredients.length !== 5) {
+            alert("You must select exactly 5 ingredients!");
+            return;
+        }
+        if (JSON.stringify(selectedIngredients.sort()) === JSON.stringify(quizzes[1].answer.sort())) {
+            revealHint(quizzes[1].hint);
+        } else {
+            alert("Your potion fizzles and fails. Try a different combination!");
+        }
+    }
+
+    window.resetPotion = function() {
+        document.querySelectorAll('.ingredient').forEach(btn => btn.classList.remove('bg-red-600'));
+        updateSelectedCount();
+    }
+
+    window.checkCipher = function() {
+        const answer = document.getElementById('cipher-answer').value.toLowerCase();
+        if (answer === quizzes[2].answer) {
+            revealHint(quizzes[2].hint);
+        } else {
+            alert("The message remains encrypted. Try decoding it again!");
+        }
+    }
+
+    window.resetCipher = function() {
+        document.getElementById('cipher-answer').value = '';
+    }
+
+    window.checkProphecy = function() {
+        const prophecyWords = Array.from(document.querySelectorAll('.prophecy-word')).map(input => input.value.toUpperCase());
+        const riddleAnswer = document.getElementById('prophecy-answer').value.toLowerCase();
+        
+        if (JSON.stringify(prophecyWords) === JSON.stringify(quizzes[3].answers.part1) &&
+            riddleAnswer === quizzes[3].answers.part2) {
+            revealHint(quizzes[3].hint);
+        } else {
+            alert("The prophecy remains unclear. Try again!");
+        }
+    }
+
+    window.resetProphecy = function() {
+        document.querySelectorAll('.prophecy-word').forEach(input => input.value = '');
+        document.getElementById('prophecy-answer').value = '';
+    }
+
+    function revealHint(hint) {
+        alert(`A chill runs down your spine as you uncover a vital clue: ${hint}`);
+        quizContent.classList.add('hidden');
+        quizGrid.classList.remove('hidden');
+        backButton.classList.add('hidden');
+    }
+      
+      
+      window.checkUltimateEnigma = function() {
+    const symbolsAnswer = document.getElementById('symbols-answer').value.toUpperCase();
+    const numericAnswer = parseInt(document.getElementById('numeric-answer').value);
+    const transformAnswer = document.getElementById('transform-answer').value.toUpperCase();
+    const incantationAnswer = document.getElementById('incantation-answer').value;
+
+    if (symbolsAnswer === quizzes[4].answers.part1 &&
+        numericAnswer === quizzes[4].answers.part2 &&
+        transformAnswer === quizzes[4].answers.part3 &&
+        incantationAnswer === quizzes[4].answers.part4) {
+        
+        const finalMessage = "Congratulations! You've solved the Ultimate Enigma. The keywords you seek are 'AI', 'Y', 'Ci'. Combine them to reveal the truth: 'AI-Cy'. Speak this word to claim instant victory for your side!";
+        alert(finalMessage);
+        revealHint(quizzes[4].hint);
+    } else {
+        alert("Your answers are incorrect. The enigma remains unsolved. Try again!");
+    }
+}
+
+window.resetUltimateEnigma = function() {
+    document.getElementById('symbols-answer').value = '';
+    document.getElementById('numeric-answer').value = '';
+    document.getElementById('transform-answer').value = '';
+    document.getElementById('incantation-answer').value = '';
+}
+});
     </script>
 </body>
 </html>
