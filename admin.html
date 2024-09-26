@@ -124,7 +124,7 @@
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
+ document.addEventListener('DOMContentLoaded', function () {
     const roles = [
         { name: 'Blood Hunter', count: 1, actions: ['Detect', 'Vengeance'], minPlayers: 7 },
         { name: 'Ravenous Werewolf', count: 2, actions: ['Attack'], minPlayers: 7 },
@@ -175,6 +175,22 @@
     const nextNightSection = document.getElementById('next-night');
     const startNextNightButton = document.getElementById('start-next-night');
 
+    const roomCountInput = document.createElement('input');
+    roomCountInput.type = 'number';
+    roomCountInput.id = 'room-count';
+    roomCountInput.className = 'bg-gray-700 text-white px-3 py-2 rounded w-full mb-4';
+    roomCountInput.min = '1';
+    roomCountInput.value = '8';
+    roomCountInput.placeholder = 'Number of Rooms';
+
+    const roomCountLabel = document.createElement('label');
+    roomCountLabel.htmlFor = 'room-count';
+    roomCountLabel.className = 'block text-sm font-medium text-gray-300 mb-2';
+    roomCountLabel.textContent = 'Number of Rooms';
+
+    gameSetup.insertBefore(roomCountInput, roleSetup);
+    gameSetup.insertBefore(roomCountLabel, roomCountInput);
+
     let players = [];
     let currentNight = 1;
     let nightEvents = {};
@@ -182,6 +198,14 @@
     let discussionTimeLeft = 120;
     let defenseTimeLeft = 60;
     let defenseTimerInterval;
+    let currentTwist = null;
+    let deadPlayers = [];
+    let roomCount = 8;
+    let gameLog = [];
+
+    roomCountInput.addEventListener('change', function() {
+        roomCount = parseInt(this.value);
+    });
 
     function createRoleSetupInputs() {
         roleSetup.innerHTML = '';
@@ -305,7 +329,9 @@
                     gender: genderInputs[index].value,
                     role: `${role.name}${role.count > 1 ? ' #' + roleCount : ''}`,
                     actions: role.actions,
-                    status: 'Alive'
+                    status: 'Alive',
+                    attackPower: 1,
+                    isBlinded: false
                 });
             }
         });
@@ -335,6 +361,7 @@
         roomAssignment.classList.remove('hidden');
         nightProgression.classList.remove('hidden');
         nightSummary.classList.remove('hidden');
+        logGameEvent('Game Started');
     });
 
     function updatePlayerStatus() {
@@ -363,12 +390,12 @@
 
     function assignRooms(players) {
         const shuffledPlayers = players.sort(() => 0.5 - Math.random());
-        const rooms = Array.from({ length: 8 }, () => []);
+        const rooms = Array.from({ length: roomCount }, () => []);
         let roomIndex = 0;
 
         shuffledPlayers.forEach(player => {
             rooms[roomIndex].push(player);
-            roomIndex = (roomIndex + 1) % 8;
+            roomIndex = (roomIndex + 1) % roomCount;
         });
 
         rooms.forEach((room, index) => {
@@ -409,6 +436,62 @@
         nightSummary.classList.remove('hidden');
     }
 
+    function triggerRandomEvent() {
+        const events = [
+            { name: "Blood Moon", effect: "All werewolf attacks are doubly effective tonight.", duration: 1 },
+            { name: "Solar Eclipse", effect: "Seers and other information-gathering roles are blinded for this round.", duration: 1 },
+            { name: "Ghost Whispers", effect: "A random dead player can send a cryptic message to the living.", duration: 1 }
+        ];
+
+        currentTwist = events[Math.floor(Math.random() * events.length)];
+        
+        const eventDiv = document.createElement('div');
+        eventDiv.className = 'bg-red-800 p-4 rounded-lg mb-4 text-white';
+        eventDiv.innerHTML = `
+            <h3 class="text-2xl mb-2">${currentTwist.name}</h3>
+            <p>${currentTwist.effect}</p>
+        `;
+        nightSummary.insertBefore(eventDiv, summaryContent);
+        
+        applyEventEffect(currentTwist);
+        logGameEvent(`Event Triggered: ${currentTwist.name}`);
+    }
+
+    function applyEventEffect(event) {
+        switch(event.name) {
+            case "Blood Moon":
+                players.forEach(player => {
+                    if (player.role.includes('Ravenous Werewolf')) {
+                        player.attackPower = 2;
+                    }
+                });
+                break;
+            case "Solar Eclipse":
+                players.forEach(player => {
+                    if (player.role === 'Cursed Seer') {
+                        player.isBlinded = true;
+                    }
+                });
+                break;
+            case "Ghost Whispers":
+                if (deadPlayers.length > 0) {
+                    const ghostPlayer = deadPlayers[Math.floor(Math.random() * deadPlayers.length)];
+                    const ghostMessage = prompt(`${ghostPlayer.name}, send a cryptic message to the living:`);
+                    if (ghostMessage) {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'bg-purple-800 p-4 rounded-lg mb-4 text-white';
+                        messageDiv.innerHTML = `
+                            <h3 class="text-xl mb-2">A whisper from beyond...</h3>
+                            <p>${ghostMessage}</p>
+                        `;
+                        nightSummary.insertBefore(messageDiv, summaryContent);
+                        logGameEvent(`Ghost Message from ${ghostPlayer.name}: ${ghostMessage}`);
+                    }
+                }
+                break;
+        }
+    }
+
     saveNightButton.addEventListener('click', function() {
         const nightData = [];
         statusContainers.querySelectorAll('div').forEach(div => {
@@ -419,11 +502,31 @@
             const notes = div.querySelector('.player-notes').value;
 
             nightData.push({ playerName, status, action, target, notes });
+
+            const player = players.find(p => p.name === playerName);
+            if (status === 'Dead' && !deadPlayers.includes(player)) {
+                deadPlayers.push(player);
+            }
         });
 
         nightEvents[currentNight] = nightData;
         generateNightSummary();
+
+        if (confirm('Trigger a random event for this night?')) {
+            triggerRandomEvent();
+        }
+
+        resetEventEffects();
+        logGameEvent(`Night ${currentNight} Events Saved`);
     });
+
+    function resetEventEffects() {
+        players.forEach(player => {
+            player.attackPower = 1;
+            player.isBlinded = false;
+        });
+        currentTwist = null;
+    }
 
     function generateNightSummary() {
         const events = nightEvents[currentNight];
@@ -438,9 +541,18 @@
 
         events.forEach(event => {
             if (event.action && event.target) {
-                actionList += `- ${event.playerName} ${event.action}ed ${event.target}\n`;
-                if (event.action === 'Attack' && !events.some(e => e.action === 'Protect' && e.target === event.target)) {
-                    deathCount++;
+                let actionEffect = event.action;
+                if (event.action === 'Attack' && players.find(p => p.name === event.playerName).attackPower === 2) {
+                    actionEffect = 'Brutally attacked';
+                }
+                if (event.action === 'Vision' && players.find(p => p.name === event.playerName).isBlinded) {
+                    actionEffect = 'Attempted to use Vision (Blinded)';
+                }
+                actionList += `- ${event.playerName} ${actionEffect} ${event.target}\n`;
+                if (actionEffect === 'Attack' || actionEffect === 'Brutally attacked') {
+                    if (!events.some(e => e.action === 'Protect' && e.target === event.target)) {
+                        deathCount++;
+                    }
                 }
                 if (event.action === 'Protect' || event.action === 'Revive') {
                     savedCount++;
@@ -457,6 +569,7 @@
 
         summaryContent.innerHTML += `<p>${summary}</p>`;
         discussionSection.classList.remove('hidden');
+        logGameEvent(`Night ${currentNight} Summary: ${summary}`);
     }
 
     startDiscussionButton.addEventListener('click', function() {
@@ -475,6 +588,7 @@
 
         startDiscussionButton.disabled = true;
         endDiscussionButton.disabled = false;
+        logGameEvent('Village Discussion Started');
     });
 
     endDiscussionButton.addEventListener('click', function() {
@@ -483,6 +597,7 @@
         endDiscussionButton.disabled = true;
         votingSection.classList.remove('hidden');
         setupVoting();
+        logGameEvent('Village Discussion Ended');
     });
 
     function setupVoting() {
@@ -497,6 +612,7 @@
         const votedPlayer = voteSelect.value;
         votes[votedPlayer] = (votes[votedPlayer] || 0) + 1;
         updateVoteResults();
+        logGameEvent(`Vote Cast for ${votedPlayer}`);
     });
 
     function updateVoteResults() {
@@ -530,6 +646,7 @@
                     finalDecisionSection.classList.remove('hidden');
                 }
             }, 1000);
+            logGameEvent(`${player}'s Defense Started`);
         });
     }
 
@@ -538,9 +655,13 @@
         players.find(p => p.name === mostVotedPlayer).status = 'Dead';
         updatePlayerStatus();
         showNextNightButton();
+        logGameEvent(`Player Executed: ${mostVotedPlayer}`);
     });
 
-    spareButton.addEventListener('click', showNextNightButton);
+    spareButton.addEventListener('click', function() {
+        showNextNightButton();
+        logGameEvent('No player executed this round');
+    });
 
     function showNextNightButton() {
         nextNightSection.classList.remove('hidden');
@@ -548,59 +669,40 @@
     }
 
     startNextNightButton.addEventListener('click', function() {
-    currentNight++;
-    resetAllPhases();
-    updateNightDisplay();
-});
+        currentNight++;
+        updateNightDisplay();
+        resetAllPhases();
+        logGameEvent(`Night ${currentNight} Started`);
+    });
 
-function resetAllPhases() {
-    // Reset night summary
-    summaryContent.innerHTML = '';
-    nightSummary.classList.add('hidden');
+    function resetAllPhases() {
+        summaryContent.innerHTML = '';
+        nightSummary.classList.add('hidden');
 
-    // Reset discussion
-    discussionSection.classList.add('hidden');
-    discussionTimeLeft = 120;
-    discussionTimer.textContent = "2:00";
-    startDiscussionButton.disabled = false;
-    endDiscussionButton.disabled = true;
+        discussionSection.classList.add('hidden');
+        discussionTimeLeft = 120;
+        discussionTimer.textContent = "2:00";
+        startDiscussionButton.disabled = false;
+        endDiscussionButton.disabled = true;
 
-    // Reset voting
-    votingSection.classList.add('hidden');
-    voteSelect.innerHTML = '';
-    voteResults.innerHTML = '';
-    votes = {};
+        votingSection.classList.add('hidden');
+        voteSelect.innerHTML = '';
+        voteResults.innerHTML = '';
+        votes = {};
 
-    // Reset defense
-    defenseSection.classList.add('hidden');
-    defensePlayer.textContent = '';
-    defenseTimeLeft = 60;
-    defenseTimer.textContent = "1:00";
-    startDefenseButton.disabled = false;
+        defenseSection.classList.add('hidden');
+        defensePlayer.textContent = '';
+        defenseTimeLeft = 60;
+        defenseTimer.textContent = "1:00";
+        startDefenseButton.disabled = false;
 
-    // Reset final decision
-    finalDecisionSection.classList.add('hidden');
+        finalDecisionSection.classList.add('hidden');
+        nextNightSection.classList.add('hidden');
 
-    // Reset next night button
-    nextNightSection.classList.add('hidden');
+        clearInterval(defenseTimerInterval);
 
-    // Clear any ongoing timers
-    clearInterval(defenseTimerInterval);
-
-    // Update player status for the new night
-    updatePlayerStatus();
-}
-
-function updateNightDisplay() {
-    currentNightSpan.textContent = `Night ${currentNight}`;
-    if (nightEvents[currentNight]) {
-        generateNightSummary();
-    } else {
-        summaryContent.textContent = 'No events recorded for this night yet.';
+        updatePlayerStatus();
     }
-    nightSummary.classList.remove('hidden');
-    nightProgression.classList.remove('hidden');
-}
 
     function speakSummary() {
         const summary = summaryContent.textContent;
@@ -620,6 +722,32 @@ function updateNightDisplay() {
     }
 
     readSummaryButton.addEventListener('click', speakSummary);
+
+    function logGameEvent(event) {
+        const now = new Date();
+        const logEntry = `${now.toISOString()} - ${event}`;
+        gameLog.push(logEntry);
+        console.log(logEntry);
+    }
+
+    function downloadLog() {
+        const logText = gameLog.join('\n');
+        const blob = new Blob([logText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `game_log_${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    const downloadLogButton = document.createElement('button');
+    downloadLogButton.textContent = 'Download Game Log';
+    downloadLogButton.className = 'mt-4 bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full';
+    downloadLogButton.addEventListener('click', downloadLog);
+    document.querySelector('main').appendChild(downloadLogButton);
 });
     </script>
 </body>
