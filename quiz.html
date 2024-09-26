@@ -33,17 +33,82 @@
             <div id="quiz-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Quiz cards will be dynamically inserted here -->
             </div>
+            <div id="quiz-content" class="mt-8 hidden">
+                <!-- Quiz content will be dynamically inserted here -->
+            </div>
         </main>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const quizGrid = document.getElementById('quiz-grid');
+        const quizContent = document.getElementById('quiz-content');
         const quizzes = [
-            { id: 1, title: "The Cryptic Riddle", description: "Solve the ancient riddle to reveal a hidden truth." },
-            { id: 2, title: "The Bloody Puzzle", description: "Piece together the gory clues to unmask a potential werewolf." },
-            { id: 3, title: "The Whispering Shadows", description: "Listen carefully to the spectral voices for hints about player roles." },
-            { id: 4, title: "The Moonlit Challenge", description: "Complete a series of tasks under the watchful eye of the full moon." }
+            { 
+                id: 1, 
+                title: "The Cryptic Riddle", 
+                description: "Solve the ancient riddle to reveal a hidden truth.",
+                content: `
+                    <p class="mb-4">Decipher the following riddle:</p>
+                    <p class="text-xl mb-4">"I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?"</p>
+                    <input type="text" id="riddle-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-4" placeholder="Enter your answer">
+                    <button onclick="checkRiddleAnswer()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Submit Answer</button>
+                `,
+                answer: "echo",
+                hint: "The Blood Hunter has keen senses."
+            },
+            { 
+                id: 2, 
+                title: "The Bloody Puzzle", 
+                description: "Piece together the gory clues to unmask a potential werewolf.",
+                content: `
+                    <p class="mb-4">Arrange the following clues in the correct order to reveal a werewolf's identity:</p>
+                    <div id="clue-container" class="mb-4">
+                        <div class="clue bg-gray-700 p-2 mb-2 cursor-move" draggable="true">Howling at midnight</div>
+                        <div class="clue bg-gray-700 p-2 mb-2 cursor-move" draggable="true">Silver allergy</div>
+                        <div class="clue bg-gray-700 p-2 mb-2 cursor-move" draggable="true">Excessive body hair</div>
+                        <div class="clue bg-gray-700 p-2 mb-2 cursor-move" draggable="true">Craving for raw meat</div>
+                    </div>
+                    <button onclick="checkPuzzleOrder()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Submit Order</button>
+                `,
+                answer: ["Silver allergy", "Excessive body hair", "Craving for raw meat", "Howling at midnight"],
+                hint: "The Ravenous Werewolf is among the villagers."
+            },
+            { 
+                id: 3, 
+                title: "The Whispering Shadows", 
+                description: "Listen carefully to the spectral voices for hints about player roles.",
+                content: `
+                    <p class="mb-4">Click the play button to hear spectral whispers. Write down what you hear:</p>
+                    <button onclick="playWhispers()" class="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded transition-colors duration-300 mb-4">
+                        <i class="fas fa-play mr-2"></i>Play Whispers
+                    </button>
+                    <textarea id="whisper-text" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-4" rows="4" placeholder="Write what you hear..."></textarea>
+                    <button onclick="checkWhispers()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Submit Whispers</button>
+                `,
+                answer: "The protector guards at night",
+                hint: "The Doomed Protector is vigilant."
+            },
+            { 
+                id: 4, 
+                title: "The Moonlit Challenge", 
+                description: "Complete a series of tasks under the watchful eye of the full moon.",
+                content: `
+                    <p class="mb-4">Work together to complete these tasks before the timer runs out:</p>
+                    <ol class="list-decimal list-inside mb-4">
+                        <li>Unscramble the word: FEWLOWER</li>
+                        <li>Solve the math problem: (13 x 4) + (7 x 6)</li>
+                        <li>Name three nocturnal animals</li>
+                    </ol>
+                    <div id="timer" class="text-2xl mb-4">2:00</div>
+                    <input type="text" id="task1-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Task 1 Answer">
+                    <input type="text" id="task2-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-2" placeholder="Task 2 Answer">
+                    <input type="text" id="task3-answer" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-4" placeholder="Task 3 Answer">
+                    <button onclick="checkMoonlitChallenge()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">Submit Answers</button>
+                `,
+                answer: ["werewolf", "94", ["owl", "bat", "wolf", "fox", "raccoon", "opossum", "moth"]],
+                hint: "The Cursed Seer's visions are strongest at night."
+            }
         ];
 
         function createQuizCard(quiz) {
@@ -63,23 +128,112 @@
         });
 
         window.startQuiz = function(quizId) {
-            // Placeholder for quiz logic
-            console.log(`Starting quiz ${quizId}`);
-            // Here you can implement the logic to show the specific quiz content
-            // and handle the quiz completion and hint revealing
+            const quiz = quizzes.find(q => q.id === quizId);
+            quizGrid.classList.add('hidden');
+            quizContent.classList.remove('hidden');
+            quizContent.innerHTML = quiz.content;
+
+            if (quizId === 4) {
+                startMoonlitChallengeTimer();
+            }
         }
 
-        // Placeholder for hint revealing logic
+        window.checkRiddleAnswer = function() {
+            const answer = document.getElementById('riddle-answer').value.toLowerCase();
+            if (answer === quizzes[0].answer) {
+                revealHint(quizzes[0].hint);
+            } else {
+                alert("Incorrect. Try again!");
+            }
+        }
+
+        window.checkPuzzleOrder = function() {
+            const clues = Array.from(document.querySelectorAll('.clue')).map(clue => clue.textContent);
+            if (JSON.stringify(clues) === JSON.stringify(quizzes[1].answer)) {
+                revealHint(quizzes[1].hint);
+            } else {
+                alert("Incorrect order. Try again!");
+            }
+        }
+
+        window.playWhispers = function() {
+            // In a real implementation, this would play an audio file
+            alert("Playing whispers: 'The protector guards at night'");
+        }
+
+        window.checkWhispers = function() {
+            const whisperText = document.getElementById('whisper-text').value.toLowerCase();
+            if (whisperText.includes(quizzes[2].answer.toLowerCase())) {
+                revealHint(quizzes[2].hint);
+            } else {
+                alert("Incorrect. Listen carefully and try again!");
+            }
+        }
+
+        let moonlitChallengeTimer;
+        function startMoonlitChallengeTimer() {
+            let timeLeft = 120; // 2 minutes
+            const timerElement = document.getElementById('timer');
+            moonlitChallengeTimer = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                if (timeLeft <= 0) {
+                    clearInterval(moonlitChallengeTimer);
+                    alert("Time's up! The challenge is over.");
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        window.checkMoonlitChallenge = function() {
+            clearInterval(moonlitChallengeTimer);
+            const answer1 = document.getElementById('task1-answer').value.toLowerCase();
+            const answer2 = document.getElementById('task2-answer').value;
+            const answer3 = document.getElementById('task3-answer').value.toLowerCase().split(',').map(animal => animal.trim());
+
+            if (answer1 === quizzes[3].answer[0] && 
+                answer2 === quizzes[3].answer[1].toString() && 
+                answer3.length >= 3 && answer3.every(animal => quizzes[3].answer[2].includes(animal))) {
+                revealHint(quizzes[3].hint);
+            } else {
+                alert("Not all answers are correct. Try again!");
+            }
+        }
+
         function revealHint(hint) {
-            alert(`You've uncovered a hint: ${hint}`);
-            // Implement the logic to display the hint to the players
+            alert(`Congratulations! You've uncovered a hint: ${hint}`);
+            quizContent.classList.add('hidden');
+            quizGrid.classList.remove('hidden');
         }
 
-        // Placeholder for werewolf interference logic
-        function werewolfInterference() {
-            console.log("A werewolf is attempting to interfere with the quiz!");
-            // Implement the logic for werewolf players to interfere with the quiz
-        }
+        // Make clues draggable for the Bloody Puzzle
+        quizContent.addEventListener('dragstart', function(e) {
+            if (e.target.classList.contains('clue')) {
+                e.dataTransfer.setData('text/plain', e.target.textContent);
+                e.target.style.opacity = '0.5';
+            }
+        });
+
+        quizContent.addEventListener('dragend', function(e) {
+            if (e.target.classList.contains('clue')) {
+                e.target.style.opacity = '1';
+            }
+        });
+
+        quizContent.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+
+        quizContent.addEventListener('drop', function(e) {
+            e.preventDefault();
+            if (e.target.classList.contains('clue')) {
+                const draggedText = e.dataTransfer.getData('text/plain');
+                const tempText = e.target.textContent;
+                e.target.textContent = draggedText;
+                document.querySelector('.clue[draggable="true"]:not(:contains("' + draggedText + '"))').textContent = tempText;
+            }
+        });
     });
     </script>
 </body>
