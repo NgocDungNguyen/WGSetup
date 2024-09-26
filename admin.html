@@ -71,352 +71,556 @@
             <section id="night-summary" class="mt-12 hidden">
                 <h2 class="eater-text text-2xl text-red-600 mb-6">Night Summary</h2>
                 <div id="summary-content" class="bg-gray-800 p-6 rounded-lg"></div>
+                <button id="read-summary" class="mt-4 bg-red-700 hover:bg-red-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full">
+                    <i class="fas fa-volume-up mr-2"></i>Read Summary Aloud
+                </button>
+            </section>
+
+            <section id="discussion" class="mt-12 hidden">
+                <h2 class="eater-text text-2xl text-red-600 mb-6">Village Discussion</h2>
+                <div id="discussion-timer" class="text-2xl font-bold mb-4">2:00</div>
+                <button id="start-discussion" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full mb-4">
+                    Start Discussion
+                </button>
+                <button id="end-discussion" class="bg-red-700 hover:bg-red-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full" disabled>
+                    End Discussion
+                </button>
+            </section>
+
+            <section id="voting" class="mt-12 hidden">
+                <h2 class="eater-text text-2xl text-red-600 mb-6">Voting</h2>
+                <select id="vote-select" class="bg-gray-700 text-white px-3 py-2 rounded w-full mb-4"></select>
+                <button id="cast-vote" class="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full mb-4">
+                    Cast Vote
+                </button>
+                <div id="vote-results" class="bg-gray-800 p-6 rounded-lg"></div>
+            </section>
+
+            <section id="defense" class="mt-12 hidden">
+                <h2 class="eater-text text-2xl text-red-600 mb-6">Player Defense</h2>
+                <div id="defense-player" class="text-xl font-bold mb-4"></div>
+                <div id="defense-timer" class="text-2xl font-bold mb-4">1:00</div>
+                <button id="start-defense" class="bg-yellow-700 hover:bg-yellow-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full">
+                    Start Defense
+                </button>
+            </section>
+
+            <section id="final-decision" class="mt-12 hidden">
+                <h2 class="eater-text text-2xl text-red-600 mb-6">Final Decision</h2>
+                <button id="execute-player" class="bg-red-700 hover:bg-red-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full mb-4">
+                    Execute Player
+                </button>
+                <button id="spare-player" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full">
+                    Spare Player
+                </button>
+            </section>
+
+            <section id="next-night" class="mt-12 hidden">
+                <button id="start-next-night" class="bg-purple-700 hover:bg-purple-800 text-white px-6 py-3 rounded-lg text-xl transition-colors duration-300 w-full">
+                    Start Next Night
+                </button>
             </section>
         </main>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const roles = [
-            { name: 'Blood Hunter', count: 1, actions: ['Detect', 'Vengeance'], minPlayers: 7 },
-            { name: 'Ravenous Werewolf', count: 2, actions: ['Attack'], minPlayers: 7 },
-            { name: 'Terrified Villager', count: 3, actions: ['Gut Feeling', 'No Action'], minPlayers: 0 },
-            { name: 'Cursed Seer', count: 1, actions: ['Vision', 'Prophetic Dream'], minPlayers: 7 },
-            { name: 'Doomed Protector', count: 1, actions: ['Protect', 'Sacrifice'], minPlayers: 8 },
-            { name: 'Twisted Cupid', count: 1, actions: ['Link', 'Heart Whisper'], minPlayers: 10 },
-            { name: 'Blood Witch', count: 1, actions: ['Revive', 'Eliminate'], minPlayers: 12 },
-            { name: 'Spectral Whisperer', count: 1, actions: ['Ethereal Message', 'Influence'], minPlayers: 15 },
-            { name: 'Shapeshifting Horror', count: 1, actions: ['Mimic', 'Reveal'], minPlayers: 18 }
-        ];
+    const roles = [
+        { name: 'Blood Hunter', count: 1, actions: ['Detect', 'Vengeance'], minPlayers: 7 },
+        { name: 'Ravenous Werewolf', count: 2, actions: ['Attack'], minPlayers: 7 },
+        { name: 'Terrified Villager', count: 3, actions: ['Gut Feeling', 'No Action'], minPlayers: 0 },
+        { name: 'Cursed Seer', count: 1, actions: ['Vision', 'Prophetic Dream'], minPlayers: 7 },
+        { name: 'Doomed Protector', count: 1, actions: ['Protect', 'Sacrifice'], minPlayers: 8 },
+        { name: 'Twisted Cupid', count: 1, actions: ['Link', 'Heart Whisper'], minPlayers: 10 },
+        { name: 'Blood Witch', count: 1, actions: ['Revive', 'Eliminate'], minPlayers: 12 },
+        { name: 'Spectral Whisperer', count: 1, actions: ['Ethereal Message', 'Influence'], minPlayers: 15 },
+        { name: 'Shapeshifting Horror', count: 1, actions: ['Mimic', 'Reveal'], minPlayers: 18 }
+    ];
 
-        const gameSetup = document.getElementById('game-setup');
-        const roleSetup = document.getElementById('role-setup');
-        const confirmSetupButton = document.getElementById('confirm-setup');
-        const suggestRolesButton = document.getElementById('suggest-roles');
-        const totalPlayersInput = document.getElementById('total-players');
-        const roleAssignment = document.getElementById('role-assignment');
-        const roleContainers = document.getElementById('role-containers');
-        const gameControl = document.getElementById('game-control');
-        const startGameButton = document.getElementById('start-game');
-        const roomAssignment = document.getElementById('room-assignment');
-        const roomContainers = document.getElementById('room-containers');
-        const nightProgression = document.getElementById('night-progression');
-        const statusContainers = document.getElementById('status-containers');
-        const prevNightButton = document.getElementById('prev-night');
-        const nextNightButton = document.getElementById('next-night');
-        const currentNightSpan = document.getElementById('current-night');
-        const saveNightButton = document.getElementById('save-night');
-        const nightSummary = document.getElementById('night-summary');
-        const summaryContent = document.getElementById('summary-content');
+    const gameSetup = document.getElementById('game-setup');
+    const roleSetup = document.getElementById('role-setup');
+    const confirmSetupButton = document.getElementById('confirm-setup');
+    const suggestRolesButton = document.getElementById('suggest-roles');
+    const totalPlayersInput = document.getElementById('total-players');
+    const roleAssignment = document.getElementById('role-assignment');
+    const roleContainers = document.getElementById('role-containers');
+    const gameControl = document.getElementById('game-control');
+    const startGameButton = document.getElementById('start-game');
+    const roomAssignment = document.getElementById('room-assignment');
+    const roomContainers = document.getElementById('room-containers');
+    const nightProgression = document.getElementById('night-progression');
+    const statusContainers = document.getElementById('status-containers');
+    const prevNightButton = document.getElementById('prev-night');
+    const nextNightButton = document.getElementById('next-night');
+    const currentNightSpan = document.getElementById('current-night');
+    const saveNightButton = document.getElementById('save-night');
+    const nightSummary = document.getElementById('night-summary');
+    const summaryContent = document.getElementById('summary-content');
+    const readSummaryButton = document.getElementById('read-summary');
+    const discussionSection = document.getElementById('discussion');
+    const discussionTimer = document.getElementById('discussion-timer');
+    const startDiscussionButton = document.getElementById('start-discussion');
+    const endDiscussionButton = document.getElementById('end-discussion');
+    const votingSection = document.getElementById('voting');
+    const voteSelect = document.getElementById('vote-select');
+    const castVoteButton = document.getElementById('cast-vote');
+    const voteResults = document.getElementById('vote-results');
+    const defenseSection = document.getElementById('defense');
+    const defensePlayer = document.getElementById('defense-player');
+    const defenseTimer = document.getElementById('defense-timer');
+    const startDefenseButton = document.getElementById('start-defense');
+    const finalDecisionSection = document.getElementById('final-decision');
+    const executeButton = document.getElementById('execute-player');
+    const spareButton = document.getElementById('spare-player');
+    const nextNightSection = document.getElementById('next-night');
+    const startNextNightButton = document.getElementById('start-next-night');
 
-        let players = [];
-        let currentNight = 1;
-        let nightEvents = {};
+    let players = [];
+    let currentNight = 1;
+    let nightEvents = {};
+    let votes = {};
+    let discussionTimeLeft = 120;
+    let defenseTimeLeft = 60;
+    let defenseTimerInterval;
 
-        function createRoleSetupInputs() {
-            roleSetup.innerHTML = '';
-            roles.forEach(role => {
-                const roleDiv = document.createElement('div');
-                roleDiv.className = 'mb-4';
-                roleDiv.innerHTML = `
-                    <label for="${role.name}-count" class="block text-sm font-medium text-gray-300 mb-2">${role.name}</label>
-                    <input type="number" id="${role.name}-count" class="role-count bg-gray-700 text-white px-3 py-2 rounded w-full" min="0" value="${role.count}">
-                `;
-                roleSetup.appendChild(roleDiv);
-            });
+    function createRoleSetupInputs() {
+        roleSetup.innerHTML = '';
+        roles.forEach(role => {
+            const roleDiv = document.createElement('div');
+            roleDiv.className = 'mb-4';
+            roleDiv.innerHTML = `
+                <label for="${role.name}-count" class="block text-sm font-medium text-gray-300 mb-2">${role.name}</label>
+                <input type="number" id="${role.name}-count" class="role-count bg-gray-700 text-white px-3 py-2 rounded w-full" min="0" value="${role.count}">
+            `;
+            roleSetup.appendChild(roleDiv);
+        });
+    }
+
+    createRoleSetupInputs();
+
+    function suggestRoles() {
+        const totalPlayers = parseInt(totalPlayersInput.value);
+        if (totalPlayers < 8) {
+            alert("Minimum 8 players required for a balanced game.");
+            return;
         }
 
-        createRoleSetupInputs();
+        roles.forEach(role => role.count = 0);
 
-        function suggestRoles() {
-            const totalPlayers = parseInt(totalPlayersInput.value);
-            if (totalPlayers < 8) {
-                alert("Minimum 8 players required for a balanced game.");
-                return;
+        roles.forEach(role => {
+            if (totalPlayers >= role.minPlayers) {
+                role.count = 1;
             }
+        });
 
-            // Reset all roles to 0
-            roles.forEach(role => role.count = 0);
+        let remainingPlayers = totalPlayers - roles.reduce((sum, role) => sum + role.count, 0);
 
-            // Assign required roles
-            roles.forEach(role => {
-                if (totalPlayers >= role.minPlayers) {
-                    role.count = 1;
-                }
-            });
+        if (totalPlayers < 12) {
+            roles.find(r => r.name === 'Ravenous Werewolf').count += 1;
+            remainingPlayers -= 1;
+        } else if (totalPlayers < 15) {
+            roles.find(r => r.name === 'Ravenous Werewolf').count += 2;
+            remainingPlayers -= 2;
+        } else {
+            roles.find(r => r.name === 'Ravenous Werewolf').count += 3;
+            remainingPlayers -= 3;
+        }
 
-            // Calculate remaining players
-            let remainingPlayers = totalPlayers - roles.reduce((sum, role) => sum + role.count, 0);
-
-            // Strategies for different player counts
-            if (totalPlayers < 12) {
-                roles.find(r => r.name === 'Ravenous Werewolf').count += 1;
-                remainingPlayers -= 1;
-            } else if (totalPlayers < 15) {
-                roles.find(r => r.name === 'Ravenous Werewolf').count += 2;
-                remainingPlayers -= 2;
+        while (remainingPlayers > 0) {
+            if (Math.random() < 0.8 || remainingPlayers === 1) {
+                roles.find(r => r.name === 'Terrified Villager').count += 1;
             } else {
-                roles.find(r => r.name === 'Ravenous Werewolf').count += 3;
-                remainingPlayers -= 3;
-            }
-
-            // Randomly assign remaining players to villagers or add extra special roles
-            while (remainingPlayers > 0) {
-                if (Math.random() < 0.8 || remainingPlayers === 1) {
-                    roles.find(r => r.name === 'Terrified Villager').count += 1;
+                const eligibleRoles = roles.filter(r => r.count === 1 && r.name !== 'Terrified Villager');
+                if (eligibleRoles.length > 0) {
+                    const randomRole = eligibleRoles[Math.floor(Math.random() * eligibleRoles.length)];
+                    randomRole.count += 1;
                 } else {
-                    const eligibleRoles = roles.filter(r => r.count === 1 && r.name !== 'Terrified Villager');
-                    if (eligibleRoles.length > 0) {
-                        const randomRole = eligibleRoles[Math.floor(Math.random() * eligibleRoles.length)];
-                        randomRole.count += 1;
-                    } else {
-                        roles.find(r => r.name === 'Terrified Villager').count += 1;
-                    }
+                    roles.find(r => r.name === 'Terrified Villager').count += 1;
                 }
-                remainingPlayers -= 1;
             }
-
-            // Update the input fields
-            roles.forEach(role => {
-                document.getElementById(`${role.name}-count`).value = role.count;
-            });
+            remainingPlayers -= 1;
         }
 
-        suggestRolesButton.addEventListener('click', suggestRoles);
+        roles.forEach(role => {
+            document.getElementById(`${role.name}-count`).value = role.count;
+        });
+    }
 
-        totalPlayersInput.addEventListener('change', suggestRoles);
+    suggestRolesButton.addEventListener('click', suggestRoles);
 
-        confirmSetupButton.addEventListener('click', function() {
-            const totalPlayers = parseInt(totalPlayersInput.value);
-            let totalRoles = 0;
-            
-            roles.forEach(role => {
-                const count = parseInt(document.getElementById(`${role.name}-count`).value);
-                role.count = count;
-                totalRoles += count;
-            });
+    totalPlayersInput.addEventListener('change', suggestRoles);
 
-            if (totalRoles !== totalPlayers) {
-                alert(`Total roles (${totalRoles}) must match total players (${totalPlayers})`);
-                return;
-            }
-
-            gameSetup.classList.add('hidden');
-            roleAssignment.classList.remove('hidden');
-            gameControl.classList.remove('hidden');
-            createRoleAssignmentInputs();
+    confirmSetupButton.addEventListener('click', function() {
+        const totalPlayers = parseInt(totalPlayersInput.value);
+        let totalRoles = 0;
+        
+        roles.forEach(role => {
+            const count = parseInt(document.getElementById(`${role.name}-count`).value);
+            role.count = count;
+            totalRoles += count;
         });
 
-        function createRoleAssignmentInputs() {
-            roleContainers.innerHTML = '';
-            roles.forEach(role => {
-                for (let i = 0; i < role.count; i++) {
-                    const roleDiv = document.createElement('div');
-                    roleDiv.className = 'mb-4 p-4 bg-gray-800 rounded-lg';
-                    roleDiv.innerHTML = `
-                        <h3 class="creepy-text text-xl text-red-500 mb-2">${role.name} ${role.count > 1 ? '#' + (i + 1) : ''}</h3>
-                        <input type="text" placeholder="Player Name" class="player-name bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
-                        <select class="player-gender bg-gray-700 text-white px-3 py-2 rounded w-full">
-                            <option value="">Select Gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                        </select>
-                    `;
-                    roleContainers.appendChild(roleDiv);
-                }
-            });
+        if (totalRoles !== totalPlayers) {
+            alert(`Total roles (${totalRoles}) must match total players (${totalPlayers})`);
+            return;
         }
 
-        startGameButton.addEventListener('click', function() {
-            players = [];
-            const playerInputs = document.querySelectorAll('.player-name');
-            const genderInputs = document.querySelectorAll('.player-gender');
+        gameSetup.classList.add('hidden');
+        roleAssignment.classList.remove('hidden');
+        gameControl.classList.remove('hidden');
+        createRoleAssignmentInputs();
+    });
 
-            playerInputs.forEach((input, index) => {
-                if (input.value && genderInputs[index].value) {
-                    const role = roles.find(role => players.filter(p => p.role.startsWith(role.name)).length < role.count);
-                    const roleCount = players.filter(p => p.role.startsWith(role.name)).length + 1;
-                    players.push({
-                        name: input.value,
-                        gender: genderInputs[index].value,
-                        role: `${role.name}${role.count > 1 ? ' #' + roleCount : ''}`,
-                        actions: role.actions,
-                        status: 'Alive'
-                    });
-                }
-            });
-
-            if (players.length !== playerInputs.length) {
-                alert('Please fill in all player names and genders before starting the game.');
-                return;
-            }
-
-            const rooms = assignRooms(players);
-
-            roomContainers.innerHTML = '';
-            rooms.forEach((room, index) => {
-                const roomDiv = document.createElement('div');
-                roomDiv.className = 'bg-gray-800 p-4 rounded-lg';
-                roomDiv.innerHTML = `
-                    <h3 class="creepy-text text-xl text-red-500 mb-2">Room ${index + 1}</h3>
-                    <ul class="list-disc list-inside">
-                        ${room.map(player => `<li>${player.name} (${player.gender})</li>`).join('')}
-                    </ul>
+    function createRoleAssignmentInputs() {
+        roleContainers.innerHTML = '';
+        roles.forEach(role => {
+            for (let i = 0; i < role.count; i++) {
+                const roleDiv = document.createElement('div');
+                roleDiv.className = 'mb-4 p-4 bg-gray-800 rounded-lg';
+                roleDiv.innerHTML = `
+                    <h3 class="creepy-text text-xl text-red-500 mb-2">${role.name} ${role.count > 1 ? '#' + (i + 1) : ''}</h3>
+                    <input type="text" placeholder="Player Name" class="player-name bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
+                    <select class="player-gender bg-gray-700 text-white px-3 py-2 rounded w-full">
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
                 `;
-                roomContainers.appendChild(roomDiv);
-            });
-
-            updatePlayerStatus();
-
-            roomAssignment.classList.remove('hidden');
-            nightProgression.classList.remove('hidden');
-            nightSummary.classList.remove('hidden');
+                roleContainers.appendChild(roleDiv);
+            }
         });
+    }
 
-        function updatePlayerStatus() {
-            statusContainers.innerHTML = '';
-            players.forEach(player => {
-                const statusDiv = document.createElement('div');
-                statusDiv.className = 'mb-4 p-4 bg-gray-800 rounded-lg';
-                statusDiv.innerHTML = `
-                    <h3 class="creepy-text text-xl text-red-500 mb-2">${player.name} (${player.role})</h3>
-                    <select class="player-status bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
-                        <option value="Alive" ${player.status === 'Alive' ? 'selected' : ''}>Alive</option>
-                        <option value="Dead" ${player.status === 'Dead' ? 'selected' : ''}>Dead</option>
-                    </select>
-                    <select class="player-action bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
-                        ${player.actions.map(action => `<option value="${action}">${action}</option>`).join('')}
-                    </select>
-                    <select class="player-target bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
-                        <option value="">Select Target</option>
-                        ${players.filter(p => p !== player).map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
-                    </select>
-                    <input type="text" placeholder="Additional Notes" class="player-notes bg-gray-700 text-white px-3 py-2 rounded w-full">
-                `;
-                statusContainers.appendChild(statusDiv);
-            });
-        }
+    startGameButton.addEventListener('click', function() {
+        players = [];
+        const playerInputs = document.querySelectorAll('.player-name');
+        const genderInputs = document.querySelectorAll('.player-gender');
 
-        function assignRooms(players) {
-            const shuffledPlayers = players.sort(() => 0.5 - Math.random());
-            const rooms = Array.from({ length: 8 }, () => []);
-            let roomIndex = 0;
-
-            shuffledPlayers.forEach(player => {
-                rooms[roomIndex].push(player);
-                roomIndex = (roomIndex + 1) % 8;
-            });
-
-            rooms.forEach((room, index) => {
-                if (!room.some(player => player.gender === 'male')) {
-                    const malePlayer = shuffledPlayers.find(p => p.gender === 'male' && !rooms.flat().includes(p));
-                    if (malePlayer) {
-                        room.push(malePlayer);
-                        const originalRoom = rooms.find(r => r.includes(malePlayer));
-                        originalRoom.splice(originalRoom.indexOf(malePlayer), 1);
-                    }
-                }
-            });
-
-            return rooms;
-        }
-
-        prevNightButton.addEventListener('click', function() {
-            if (currentNight > 1) {
-                currentNight--;
-                updateNightDisplay();
+        playerInputs.forEach((input, index) => {
+            if (input.value && genderInputs[index].value) {
+                const role = roles.find(role => players.filter(p => p.role.startsWith(role.name)).length < role.count);
+                const roleCount = players.filter(p => p.role.startsWith(role.name)).length + 1;
+                players.push({
+                    name: input.value,
+                    gender: genderInputs[index].value,
+                    role: `${role.name}${role.count > 1 ? ' #' + roleCount : ''}`,
+                    actions: role.actions,
+                    status: 'Alive'
+                });
             }
         });
 
-        nextNightButton.addEventListener('click', function() {
-            currentNight++;
+        if (players.length !== playerInputs.length) {
+            alert('Please fill in all player names and genders before starting the game.');
+            return;
+        }
+
+        const rooms = assignRooms(players);
+
+        roomContainers.innerHTML = '';
+        rooms.forEach((room, index) => {
+            const roomDiv = document.createElement('div');
+            roomDiv.className = 'bg-gray-800 p-4 rounded-lg';
+            roomDiv.innerHTML = `
+                <h3 class="creepy-text text-xl text-red-500 mb-2">Room ${index + 1}</h3>
+                <ul class="list-disc list-inside">
+                    ${room.map(player => `<li>${player.name} (${player.gender})</li>`).join('')}
+                </ul>
+            `;
+            roomContainers.appendChild(roomDiv);
+        });
+
+        updatePlayerStatus();
+
+        roomAssignment.classList.remove('hidden');
+        nightProgression.classList.remove('hidden');
+        nightSummary.classList.remove('hidden');
+    });
+
+    function updatePlayerStatus() {
+        statusContainers.innerHTML = '';
+        players.forEach(player => {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'mb-4 p-4 bg-gray-800 rounded-lg';
+            statusDiv.innerHTML = `
+                <h3 class="creepy-text text-xl text-red-500 mb-2">${player.name} (${player.role})</h3>
+                <select class="player-status bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
+                    <option value="Alive" ${player.status === 'Alive' ? 'selected' : ''}>Alive</option>
+                    <option value="Dead" ${player.status === 'Dead' ? 'selected' : ''}>Dead</option>
+                </select>
+                <select class="player-action bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
+                    ${player.actions.map(action => `<option value="${action}">${action}</option>`).join('')}
+                </select>
+                <select class="player-target bg-gray-700 text-white px-3 py-2 rounded w-full mb-2">
+                    <option value="">Select Target</option>
+                    ${players.filter(p => p !== player).map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+                </select>
+                <input type="text" placeholder="Additional Notes" class="player-notes bg-gray-700 text-white px-3 py-2 rounded w-full">
+            `;
+            statusContainers.appendChild(statusDiv);
+        });
+    }
+
+    function assignRooms(players) {
+        const shuffledPlayers = players.sort(() => 0.5 - Math.random());
+        const rooms = Array.from({ length: 8 }, () => []);
+        let roomIndex = 0;
+
+        shuffledPlayers.forEach(player => {
+            rooms[roomIndex].push(player);
+            roomIndex = (roomIndex + 1) % 8;
+        });
+
+        rooms.forEach((room, index) => {
+            if (!room.some(player => player.gender === 'male')) {
+                const malePlayer = shuffledPlayers.find(p => p.gender === 'male' && !rooms.flat().includes(p));
+                if (malePlayer) {
+                    room.push(malePlayer);
+                    const originalRoom = rooms.find(r => r.includes(malePlayer));
+                    originalRoom.splice(originalRoom.indexOf(malePlayer), 1);
+                }
+            }
+        });
+
+        return rooms;
+    }
+
+    prevNightButton.addEventListener('click', function() {
+        if (currentNight > 1) {
+            currentNight--;
             updateNightDisplay();
-        });
-
-        function updateNightDisplay() {
-            currentNightSpan.textContent = `Night ${currentNight}`;
-            if (nightEvents[currentNight]) {
-                updatePlayerStatus();
-                generateNightSummary();
-            } else {
-                updatePlayerStatus();
-                summaryContent.textContent = 'No events recorded for this night yet.';
-            }
-        }
-
-        saveNightButton.addEventListener('click', function() {
-            const nightData = [];
-            statusContainers.querySelectorAll('div').forEach(div => {
-                const playerName = div.querySelector('h3').textContent.split(' (')[0];
-                const status = div.querySelector('.player-status').value;
-                const action = div.querySelector('.player-action').value;
-                const target = div.querySelector('.player-target').value;
-                const notes = div.querySelector('.player-notes').value;
-
-                nightData.push({ playerName, status, action, target, notes });
-            });
-
-            nightEvents[currentNight] = nightData;
-            generateNightSummary();
-        });
-
-        function generateNightSummary() {
-            const events = nightEvents[currentNight];
-            if (!events) {
-                summaryContent.textContent = 'No events recorded for this night.';
-                return;
-            }
-
-            let summary = `As the moon rose on Night ${currentNight}, the village was shrouded in an eerie silence. `;
-
-            const attacks = events.filter(e => e.action === 'Attack' && e.target);
-            const protections = events.filter(e => e.action === 'Protect' && e.target);
-            const visions = events.filter(e => e.action === 'Vision' && e.target);
-
-            if (attacks.length > 0) {
-                summary += `The werewolves prowled the streets, their hunger insatiable. `;
-                attacks.forEach(attack => {
-                    const wasProtected = protections.some(p => p.target === attack.target);
-                    if (wasProtected) {
-                        summary += `They attempted to attack ${attack.target}, but their prey was mysteriously protected. `;
-                    } else {
-                        summary += `Their claws found ${attack.target}, leaving behind a gruesome scene. `;
-                    }
-                });
-            }
-
-            if (visions.length > 0) {
-                summary += `The Cursed Seer's eyes glowed in the darkness, piercing through veils of deception. `;
-                visions.forEach(vision => {
-                    summary += `They gazed upon ${vision.target}, uncovering hidden truths. `;
-                });
-            }
-
-            events.forEach(event => {
-                switch (event.action) {
-                    case 'Detect':
-                        summary += `The Blood Hunter's senses tingled as they investigated ${event.target}. `;
-                        break;
-                    case 'Revive':
-                        summary += `The Blood Witch worked their dark magic, attempting to breathe life back into ${event.target}. `;
-                        break;
-                    case 'Eliminate':
-                        summary += `A sinister curse was cast upon ${event.target}, their fate hanging by a thread. `;
-                        break;
-                    case 'Influence':
-                        summary += `Whispers of the beyond reached ${event.target}, subtly guiding their actions. `;
-                        break;
-                    case 'Mimic':
-                        summary += `The Shapeshifting Horror took on a new form, blending seamlessly among the villagers. `;
-                        break;
-                }
-            });
-
-            summary += `As dawn broke, the village awoke to face the consequences of the night's events, unaware of the horrors that had unfolded in the shadows.`;
-
-            summaryContent.innerHTML = summary;
         }
     });
+
+    nextNightButton.addEventListener('click', function() {
+        currentNight++;
+        updateNightDisplay();
+    });
+
+    function updateNightDisplay() {
+        currentNightSpan.textContent = `Night ${currentNight}`;
+        if (nightEvents[currentNight]) {
+            updatePlayerStatus();
+            generateNightSummary();
+        } else {
+            updatePlayerStatus();
+            summaryContent.textContent = 'No events recorded for this night yet.';
+        }
+        nightSummary.classList.remove('hidden');
+    }
+
+    saveNightButton.addEventListener('click', function() {
+        const nightData = [];
+        statusContainers.querySelectorAll('div').forEach(div => {
+            const playerName = div.querySelector('h3').textContent.split(' (')[0];
+            const status = div.querySelector('.player-status').value;
+            const action = div.querySelector('.player-action').value;
+            const target = div.querySelector('.player-target').value;
+            const notes = div.querySelector('.player-notes').value;
+
+            nightData.push({ playerName, status, action, target, notes });
+        });
+
+        nightEvents[currentNight] = nightData;
+        generateNightSummary();
+    });
+
+    function generateNightSummary() {
+        const events = nightEvents[currentNight];
+        if (!events) {
+            summaryContent.textContent = 'No events recorded for this night.';
+            return;
+        }
+
+        let actionList = `Night ${currentNight} Actions:\n`;
+        let deathCount = 0;
+        let savedCount = 0;
+
+        events.forEach(event => {
+            if (event.action && event.target) {
+                actionList += `- ${event.playerName} ${event.action}ed ${event.target}\n`;
+                if (event.action === 'Attack' && !events.some(e => e.action === 'Protect' && e.target === event.target)) {
+                    deathCount++;
+                }
+                if (event.action === 'Protect' || event.action === 'Revive') {
+                    savedCount++;
+                }
+            }
+        });
+
+        summaryContent.innerHTML = `<pre>${actionList}</pre>`;
+
+        const alivePlayers = players.filter(p => p.status === 'Alive').length;
+        const summary = `As dawn breaks, the village awakens to find ${deathCount} resident${deathCount !== 1 ? 's' : ''} have met a gruesome fate. 
+            ${savedCount > 0 ? `Miraculously, ${savedCount} life${savedCount !== 1 ? 'ves were' : ' was'} spared from the night's terrors. ` : ''}
+            With ${alivePlayers} survivors remaining, the time has come to uncover the truth. Let the discussions begin!`;
+
+        summaryContent.innerHTML += `<p>${summary}</p>`;
+        discussionSection.classList.remove('hidden');
+    }
+
+    startDiscussionButton.addEventListener('click', function() {
+        discussionTimeLeft = 120;
+        const timer = setInterval(function() {
+            discussionTimeLeft--;
+            const minutes = Math.floor(discussionTimeLeft / 60);
+            const seconds = discussionTimeLeft % 60;
+            discussionTimer.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            if (discussionTimeLeft <= 0) {
+                clearInterval(timer);
+                endDiscussionButton.disabled = false;
+            }
+        }, 1000);
+
+        startDiscussionButton.disabled = true;
+        endDiscussionButton.disabled = false;
+    });
+
+    endDiscussionButton.addEventListener('click', function() {
+        discussionTimeLeft = 0;
+        discussionTimer.textContent = "Time's up!";
+        endDiscussionButton.disabled = true;
+        votingSection.classList.remove('hidden');
+        setupVoting();
+    });
+
+    function setupVoting() {
+        voteSelect.innerHTML = players
+            .filter(p => p.status === 'Alive')
+            .map(p => `<option value="${p.name}">${p.name}</option>`)
+            .join('');
+        votes = {};
+    }
+
+    castVoteButton.addEventListener('click', function() {
+        const votedPlayer = voteSelect.value;
+        votes[votedPlayer] = (votes[votedPlayer] || 0) + 1;
+        updateVoteResults();
+    });
+
+    function updateVoteResults() {
+        voteResults.innerHTML = Object.entries(votes)
+            .sort((a, b) => b[1] - a[1])
+            .map(([player, count]) => `${player}: ${count}`)
+            .join('<br>');
+
+        const mostVotedPlayer = Object.entries(votes).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+        defenseSection.classList.remove('hidden');
+        setupDefenseTimer(mostVotedPlayer);
+    }
+
+    function setupDefenseTimer(player) {
+        defensePlayer.textContent = `${player}'s Defense`;
+        defenseTimeLeft = 60;
+        defenseTimer.textContent = "1:00";
+        startDefenseButton.disabled = false;
+
+        startDefenseButton.addEventListener('click', function() {
+            startDefenseButton.disabled = true;
+            defenseTimerInterval = setInterval(function() {
+                defenseTimeLeft--;
+                const minutes = Math.floor(defenseTimeLeft / 60);
+                const seconds = defenseTimeLeft % 60;
+                defenseTimer.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                if (defenseTimeLeft <= 0) {
+                    clearInterval(defenseTimerInterval);
+                    defenseTimer.textContent = "Time's up!";
+                    finalDecisionSection.classList.remove('hidden');
+                }
+            }, 1000);
+        });
+    }
+
+    executeButton.addEventListener('click', function() {
+        const mostVotedPlayer = Object.entries(votes).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+        players.find(p => p.name === mostVotedPlayer).status = 'Dead';
+        updatePlayerStatus();
+        showNextNightButton();
+    });
+
+    spareButton.addEventListener('click', showNextNightButton);
+
+    function showNextNightButton() {
+        nextNightSection.classList.remove('hidden');
+        finalDecisionSection.classList.add('hidden');
+    }
+
+    startNextNightButton.addEventListener('click', function() {
+    currentNight++;
+    resetAllPhases();
+    updateNightDisplay();
+});
+
+function resetAllPhases() {
+    // Reset night summary
+    summaryContent.innerHTML = '';
+    nightSummary.classList.add('hidden');
+
+    // Reset discussion
+    discussionSection.classList.add('hidden');
+    discussionTimeLeft = 120;
+    discussionTimer.textContent = "2:00";
+    startDiscussionButton.disabled = false;
+    endDiscussionButton.disabled = true;
+
+    // Reset voting
+    votingSection.classList.add('hidden');
+    voteSelect.innerHTML = '';
+    voteResults.innerHTML = '';
+    votes = {};
+
+    // Reset defense
+    defenseSection.classList.add('hidden');
+    defensePlayer.textContent = '';
+    defenseTimeLeft = 60;
+    defenseTimer.textContent = "1:00";
+    startDefenseButton.disabled = false;
+
+    // Reset final decision
+    finalDecisionSection.classList.add('hidden');
+
+    // Reset next night button
+    nextNightSection.classList.add('hidden');
+
+    // Clear any ongoing timers
+    clearInterval(defenseTimerInterval);
+
+    // Update player status for the new night
+    updatePlayerStatus();
+}
+
+function updateNightDisplay() {
+    currentNightSpan.textContent = `Night ${currentNight}`;
+    if (nightEvents[currentNight]) {
+        generateNightSummary();
+    } else {
+        summaryContent.textContent = 'No events recorded for this night yet.';
+    }
+    nightSummary.classList.remove('hidden');
+    nightProgression.classList.remove('hidden');
+}
+
+    function speakSummary() {
+        const summary = summaryContent.textContent;
+        const utterance = new SpeechSynthesisUtterance(summary);
+        
+        const voices = speechSynthesis.getVoices();
+        const femaleVoice = voices.find(voice => voice.name.includes('Female') || voice.name.includes('woman'));
+        if (femaleVoice) {
+            utterance.voice = femaleVoice;
+        }
+
+        utterance.pitch = 1.2;
+        utterance.rate = 0.9;
+        utterance.volume = 1;
+
+        speechSynthesis.speak(utterance);
+    }
+
+    readSummaryButton.addEventListener('click', speakSummary);
+});
     </script>
 </body>
 </html>
