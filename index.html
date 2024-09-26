@@ -462,20 +462,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     unlockButton.addEventListener('click', function () {
-            const enteredPassword = passwordInput.value;
-            if (enteredPassword === correctPassword) {
-                hideElement(passwordSection);
-                showElement(roleSetup);
-                roleGrid.innerHTML = roles.map((role, index) => createFilterCard(role, index)).join('');
-            } else if (enteredPassword === '4321') {
-                // Redirect to admin page
-                window.location.href = 'admin.html';
-            } else {
-                alert('The spirits howl in rejection. Your blood is unworthy, mortal.');
-                passwordInput.classList.add('shake');
-                setTimeout(() => passwordInput.classList.remove('shake'), 500);
-            }
-        });
+    const enteredPassword = passwordInput.value;
+    if (enteredPassword === correctPassword) {
+        hideElement(passwordSection);
+        showElement(roleSetup);
+        roleGrid.innerHTML = roles.map((role, index) => createFilterCard(role, index)).join('');
+    } else if (enteredPassword === '4321') {
+        // Redirect to admin page
+        window.location.href = 'admin.html';
+    } else if (enteredPassword === '4444') {
+        // Redirect to quiz page
+        window.location.href = 'quiz.html';
+    } else {
+        alert('The spirits howl in rejection. Your blood is unworthy, mortal.');
+        passwordInput.classList.add('shake');
+        setTimeout(() => passwordInput.classList.remove('shake'), 500);
+    }
+});
 
     startButton.addEventListener('click', function () {
         hideElement(roleSetup);
