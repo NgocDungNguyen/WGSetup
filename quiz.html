@@ -1,0 +1,86 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Werewolf's Bloody Haunting - Room Quizzes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=Eater&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        .creepy-text { font-family: 'Creepster', cursive; }
+        .nosifer-text { font-family: 'Nosifer', cursive; }
+        .eater-text { font-family: 'Eater', cursive; }
+        .blood-overlay {
+            background: linear-gradient(to bottom, rgba(139,0,0,0.1), rgba(139,0,0,0.3));
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4">
+    <div class="blood-overlay"></div>
+    <div class="container mx-auto px-4 py-8 max-w-4xl relative z-10">
+        <header class="text-center mb-12">
+            <h1 class="nosifer-text text-4xl sm:text-5xl text-red-700 mb-4">Room Quizzes</h1>
+            <p class="creepy-text text-xl sm:text-2xl text-red-500">Uncover the Secrets, Beware the Wolves</p>
+        </header>
+
+        <main>
+            <div id="quiz-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Quiz cards will be dynamically inserted here -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const quizGrid = document.getElementById('quiz-grid');
+        const quizzes = [
+            { id: 1, title: "The Cryptic Riddle", description: "Solve the ancient riddle to reveal a hidden truth." },
+            { id: 2, title: "The Bloody Puzzle", description: "Piece together the gory clues to unmask a potential werewolf." },
+            { id: 3, title: "The Whispering Shadows", description: "Listen carefully to the spectral voices for hints about player roles." },
+            { id: 4, title: "The Moonlit Challenge", description: "Complete a series of tasks under the watchful eye of the full moon." }
+        ];
+
+        function createQuizCard(quiz) {
+            return `
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg border-2 border-red-700">
+                    <h2 class="eater-text text-2xl text-red-500 mb-4">${quiz.title}</h2>
+                    <p class="text-gray-300 mb-4">${quiz.description}</p>
+                    <button onclick="startQuiz(${quiz.id})" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-colors duration-300">
+                        Start Quiz
+                    </button>
+                </div>
+            `;
+        }
+
+        quizzes.forEach(quiz => {
+            quizGrid.innerHTML += createQuizCard(quiz);
+        });
+
+        window.startQuiz = function(quizId) {
+            // Placeholder for quiz logic
+            console.log(`Starting quiz ${quizId}`);
+            // Here you can implement the logic to show the specific quiz content
+            // and handle the quiz completion and hint revealing
+        }
+
+        // Placeholder for hint revealing logic
+        function revealHint(hint) {
+            alert(`You've uncovered a hint: ${hint}`);
+            // Implement the logic to display the hint to the players
+        }
+
+        // Placeholder for werewolf interference logic
+        function werewolfInterference() {
+            console.log("A werewolf is attempting to interfere with the quiz!");
+            // Implement the logic for werewolf players to interfere with the quiz
+        }
+    });
+    </script>
+</body>
+</html>
